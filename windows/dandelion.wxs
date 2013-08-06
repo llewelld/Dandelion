@@ -1,0 +1,137 @@
+<?xml version='1.0' encoding='windows-1252'?>
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+
+	<Product Name='Dandelion' Id='A515B4E8-0571-4465-8CEC-A41C50DFE51C'
+		UpgradeCode='D1405DA4-2111-4fc1-8CFD-A52F897A8CA0'
+		Language='1033' Codepage='1252' Version='$(env.productversion)' Manufacturer='David Llewellyn-Jones'>
+
+		<Package Id='*' Keywords='Installer'
+			Description="Dandelion Installer"
+			Comments='Dandelion is released under an MIT-style licence. See http://functy.sourceforge.net for more info.'
+			Manufacturer='David Llewellyn-Jones'
+			InstallerVersion='100' Languages='1033' Compressed='yes' SummaryCodepage='1252' InstallScope="perMachine" />
+		<Media Id='1' Cabinet='Dandelion.cab' EmbedCab='yes' DiskPrompt="CD-ROM #1" />
+		<Property Id='DiskPrompt' Value="Dandelion Installation [1]" />
+
+		<Directory Id='TARGETDIR' Name='SourceDir'>
+			<Directory Id='ProgramFilesFolder' Name='PFiles'>
+				<Directory Id='INSTALLDIR' Name='Dandelion'>
+					<Component Id='MainExecutable' Guid='9F0B2D18-33F9-4316-931D-4DB544EDA3AA'>
+						<File Id='DandelionEXE' Name='dandelion.exe' DiskId='1'
+							Source='dandelion.exe' Vital='yes'>
+						</File>
+						<RemoveFile Id='Settings' On='uninstall' Name='.dandelion.xml' />
+					</Component>
+
+					<Component Id='ClientExecutable' Guid='B44783BF-1070-4cc5-AFB3-1CAA9B45CAC5'>
+						<File Id='DandeClientEXE' Name='dandeclient.exe' DiskId='1'
+							Source='dandeclient.exe' Vital='yes'>
+						</File>
+					</Component>
+
+
+
+
+
+
+
+					<Component Id='StartMenuShortcuts' Guid='1E67A408-0A42-4aaa-82FC-0CE11075F456'>
+						<Shortcut Id="StartMenuDandelion" Directory="ProgramMenuDir" Name="Dandelion" 
+							WorkingDirectory='INSTALLDIR'
+							Target="[!DandelionEXE]"
+							Icon="dandelion.ico" IconIndex="0" />
+						<Shortcut Id="StartMenuDandeClient" Directory="ProgramMenuDir" Name="DandeClient" 
+							WorkingDirectory='INSTALLDIR'
+							Target="[!DandeClientEXE]"
+							Icon="dandelion.ico" IconIndex="0" />
+						<Condition>SHORTCUT_STARTMENU</Condition>
+						<CreateFolder/>
+						<RemoveFolder Id="ProgramMenuDirDandelion" Directory="ProgramMenuDir" On="uninstall"/>
+						<RegistryValue Root="HKCU" Key="Software\Dandelion" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+					</Component>
+
+					<Component Id='DesktopShortcuts' Guid='2BCBB731-5C50-489c-ACAC-0C3DBABD3160'>
+						<Shortcut Id="DesktopDandelion" Directory="DesktopFolder" Name="Dandelion" 
+							WorkingDirectory='INSTALLDIR'
+							Target="[!DandelionEXE]"
+							Icon="dandelion.ico" IconIndex="0" />
+						<Shortcut Id="DesktopDandeClient" Directory="DesktopFolder" Name="DandeClient" 
+							WorkingDirectory='INSTALLDIR'
+							Target="[!DandeClientEXE]"
+							Icon="dandelion.ico" IconIndex="0" />
+						<Condition>SHORTCUT_DESKTOP</Condition>
+						<CreateFolder/>
+						<RegistryValue Root="HKCU" Key="Software\Dandelion" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+					</Component>
+
+					<Directory Id='DandelionAssetsFolder' Name='assets'>
+						<Component Id='DandelionAssets' Guid='AAA5CD06-AF37-4c7b-AB15-921512171051'>
+							<File Id='DandelionGlade' Name='Dandelion.glade' DiskId='1' Source='assets\Dandelion.glade' Vital='yes' />
+							<File Id='DandeClientGlade' Name='DandeClient.glade' DiskId='1' Source='assets\DandeClient.glade' Vital='yes' />
+							<File Id='NotesRaw' Name='Notes.raw' DiskId='1' Source='assets\Notes.raw' Vital='yes' />
+							</Component>
+					</Directory>
+					
+					<Component Id='FreeGlutLibrary' Guid='ED53F110-2BB1-475c-964A-EC15235036CF'>
+						<File Id='freeglutDLL' Name='freeglut.dll' DiskId='1' Source='freeglut.dll' />
+					</Component>
+
+					<Component Id='GNetLibrary' Guid='350145B0-D498-4d6e-BCBA-8615FA7CDC0C'>
+						<File Id='gnetDLL' Name='gnet-2.0.dll' DiskId='1' Source='gnet-2.0.dll' />
+					</Component>
+
+					<Component Id='InfoFiles' Guid='225809E6-647E-43f0-A52A-EF7A88C7C33E'>
+						<File Id='ReadMe' Name='README' DiskId='1' Source='README' />
+						<File Id='News' Name='NEWS' DiskId='1' Source='NEWS' />
+						<File Id='Install' Name='INSTALL' DiskId='1' Source='INSTALL' />
+						<File Id='Authors' Name='AUTHORS' DiskId='1' Source='AUTHORS' />
+						<File Id='Copying' Name='COPYING' DiskId='1' Source='COPYING' />
+					</Component>
+
+				</Directory>
+			</Directory>
+
+			<Directory Id="ProgramMenuFolder" Name="Programs">
+				<Directory Id="ProgramMenuDir" Name='Dandelion' />
+			</Directory>
+
+			<Directory Id="DesktopFolder" Name="Desktop" />
+		</Directory>
+
+		<Feature Id='Complete' Title="Dandelion" Description="The Dandelion graph rendering package" Display="expand" Level='1' ConfigurableDirectory='INSTALLDIR'>
+			<Feature Id='MainProgram' Title="Program" Description="The main executable" Level='1'>
+				<ComponentRef Id='MainExecutable' />
+				<ComponentRef Id='ClientExecutable' />
+				<ComponentRef Id='DandelionAssets' />
+				<ComponentRef Id='FreeGlutLibrary' />
+				<ComponentRef Id='GNetLibrary' />
+			</Feature>
+
+			<Feature Id='StartMenu' Title="Start Menu Shortcuts" Description="Shortcuts to the program added to your Start menu" Level='1'>
+				<ComponentRef Id='StartMenuShortcuts' />
+			</Feature>
+
+			<Feature Id='Desktop' Title="Desktop Shortcut" Description="Shortcuts to the program added to your Desktop" Level='1'>
+				<ComponentRef Id='DesktopShortcuts' />
+			</Feature>
+			
+			<Feature Id='Info' Title='Information' Description='ReadMe, licence and basic documentation.' Level='1'>
+				<ComponentRef Id='InfoFiles' />
+			</Feature>
+		</Feature>
+
+		<Property Id="WIXUI_INSTALLDIR">INSTALLDIR</Property>
+		<Property Id="SHORTCUT_DESKTOP">1</Property>
+		<Property Id="SHORTCUT_STARTMENU">1</Property>
+		<UIRef Id="WixUI_Dandelion" />
+		<UIRef Id="WixUI_ErrorProgressText" />
+
+		<Icon Id="dandelion.ico" SourceFile="dandelion.ico" />
+	</Product>
+</Wix>
+
+
+
+
+
+

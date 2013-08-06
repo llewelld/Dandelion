@@ -1,0 +1,4 @@
+cd src
+gcc -DHAVE_CONFIG_H -DDANDEDIR=\"./assets\" *.c -I. -I.. $(pkg-config --cflags --libs glu) $(pkg-config --cflags --libs libxml-2.0) $(pkg-config --cflags --libs libglade-2.0) $(pkg-config --cflags --libs gdk-2.0) $(pkg-config --cflags --libs gtk+-2.0) $(pkg-config --cflags --libs gtkglext-1.0) $(pkg-config --cflags --libs gnet-2.0) -lglut -O2 -Wall -o ../dandelion
+cd ..
+

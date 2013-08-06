@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='windows-1252'?>
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+	<Bundle 
+		Name="Dandelion Installer" 
+		Manufacturer="David Llewellyn-Jones" 
+		Version="$(env.productversion)" 
+		UpgradeCode="2FFC460C-4F78-4219-8920-815BA9557020"
+		>
+	<Variable Name="InstallFolder" Value="[ProgramFilesFolder]Dandelion" />
+	<BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.HyperlinkLicense" />
+	<WixVariable Id="WixStdbaLicenseUrl" Value="" />
+	<WixVariable Id="WixStdbaLogo" Value="dandelion48.png" />
+	<Chain>
+		<MsiPackage 
+			Id="Dandelion" 
+			SourceFile="..\..\dandelion-$(env.productversion)-win32-bin.msi" 
+			DisplayInternalUI="no" 
+			Vital="yes" 
+			Compressed="yes" 
+			>
+			<MsiProperty Name="INSTALLDIR" Value="[InstallFolder]" />
+		</MsiPackage>
+		<ExePackage 
+			Id="GTK_2.12.9" 
+			SourceFile="gtk-2.12.9-win32-2.exe" 
+			PerMachine="yes" 
+			Vital="yes" 
+			Compressed="yes" 
+			InstallCommand="/S" 
+			/>
+	</Chain>
+  </Bundle>
+</Wix>

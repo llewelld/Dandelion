@@ -1,0 +1,37 @@
+Windows Build Environment Installation
+**************************************
+
+Notes for how to set up a development environment for building Dandelion on Windows.
+
+1. Install GTK2+ development libraries
+	Run the installer: gtk-dev-2.12.9-win32-1.exe
+	
+2. Check the following paths have been added to the environment variables (add them if not)
+	GTK_BASEPATH contains: C:\GTK
+	INCLUDE contains:
+		C:\GTK\INCLUDE
+		C:\GTK\INCLUDE\GTK-2.0
+		etc...
+	Path contains: %GTK_BASEPATH%\bin
+	LIB contains: C:\GTK\LIB
+
+3. Install MinGW
+Run the installer: MinGW-5.1.3.exe
+(minimal is okay)
+
+4. Check the following paths have been added to the environment variables (add them if not)
+	Path contains: C:\MinGW\bin
+	LIB contains: C:\MinGW\lib
+	Include contains: C:\MinGW\include
+
+5. Check that gcc is available from the command line
+	type: gcc -v
+	output: “gcc version 3.4.2 (mingw-special)”
+
+6. Install gnet
+	Copy gnet from gnet.zip into C:\GTK
+
+7. Build dandelion.exe and dandeclient.exe
+	Open a command window inside the Dandelion folder.
+	Execute: windows\build.bat
+	Execute: windows\buildclient.bat

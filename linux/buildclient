@@ -1,0 +1,4 @@
+cd dandeclientsrc
+gcc -DHAVE_CONFIG_H -DDANDEDIR=\"./assets\" dandeclient.c dlclient.c -I. -I.. $(pkg-config --cflags --libs glib-2.0) $(pkg-config --cflags --libs libxml-2.0) $(pkg-config --cflags --libs libglade-2.0) $(pkg-config --cflags --libs gdk-2.0) $(pkg-config --cflags --libs gtk+-2.0) $(pkg-config --cflags --libs gnet-2.0) -O2 -Wall -o ../dandeclient
+cd ..
+
