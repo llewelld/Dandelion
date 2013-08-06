@@ -12,7 +12,7 @@ If you have autoconf you should be able to install using the following commands:
 autoreconf --install
 ./configure
 make
-make install
+sudo make install
 
 License
 =======
