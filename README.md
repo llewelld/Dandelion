@@ -28,6 +28,6 @@ The source code can be obtained from GitHub: https://github.com/llewelld/Dandeli
 
 I can be contacted via one of the following.
 
- * My website: http://www.flypig.co.uk
+ * Website: http://www.flypig.co.uk
  * Email: david@flypig.co.uk
 
