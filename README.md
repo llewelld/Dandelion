@@ -9,13 +9,10 @@ Install
 
 If you have autoconf you should be able to install using the following commands:
 
-autoreconf --install
-
-./configure
-
-make
-
-sudo make install
+    autoreconf --install
+    ./configure
+    make
+    sudo make install
 
 License
 -------
