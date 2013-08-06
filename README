@@ -16,14 +16,14 @@ make install
 License
 =======
 
-Read COPYING for information on the license. Dandelion is released under the MIT License.
+Read COPYING for information on the license. Dandelion is released under the GPLv3 License.
 
 
 Contact and Links
 =================
 
 More information can be found at: http://www.flypig.co.uk
-The source code can be obtained via svn from: http://www.flypig.co.uk
+The source code can be obtained via GitHub: https://github.com/llewelld/Dandelion.git
 
 I can be contacted via one of the following.
 
