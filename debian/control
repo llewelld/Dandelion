@@ -1,0 +1,20 @@
+Source: dandelion
+Section: unknown
+Priority: extra
+Maintainer: David Llewellyn-Jones <david@flypig.co.uk>
+Build-Depends: debhelper (>= 8.0.0), autotools-dev
+Standards-Version: 3.9.4
+Homepage: http://www.flypig.co.uk/?to=dandelion
+Vcs-Git: https://github.com/llewelld/Dandelion.git
+Vcs-Browser: https://github.com/llewelld/Dandelion
+
+Package: dandelion
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Network controllable 3D graph rendering
+ Dandelion is a 3D graph rendering application that 
+ can be controlled across the network. It's main 
+ purpose is to allow clear network graphs to be 
+ rendered in a window, which can be controlled by a 
+ separate application or the user.
+

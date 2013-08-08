@@ -1,3 +1,53 @@
+Quick instructions
+******************
+
+Under Linux
+
+1. Generate configure scripts:
+
+autoreconf --install
+
+2. Generate makefiles:
+
+./configure
+
+3. Build application:
+
+make
+
+4. Install application (usually has to be done as root):
+
+sudo make install
+
+5. Run the Dandelion or client application:
+
+./dandelion
+
+or
+
+./dandeclient
+
+6. To create the debian package:
+
+debuild -b
+
+7. To create the source archive:
+
+make dist-zip
+
+Under Windows
+
+1. Build the application from the console:
+
+windows\build.bat
+
+2. Run the application by double clicking the exe.
+
+3. Create the installer and bootstrapper using WiX 3.7 (where <version> is something like 1.0.0):
+
+windows\buildSetup.bat <version>
+
+
 Windows Build Environment Installation
 **************************************
 
@@ -26,12 +76,17 @@ Run the installer: MinGW-5.1.3.exe
 
 5. Check that gcc is available from the command line
 	type: gcc -v
-	output: “gcc version 3.4.2 (mingw-special)”
+	output: "gcc version 3.4.2 (mingw-special)"
 
 6. Install gnet
 	Copy gnet from gnet.zip into C:\GTK
 
-7. Build dandelion.exe and dandeclient.exe
+7. Install Windows Installer XML Toolkit (v3.7 or later needed)
+
+8. Build dandelion.exe, dandeclient.exe and the Dandelion Windows installer packages
 	Open a command window inside the Dandelion folder.
 	Execute: windows\build.bat
 	Execute: windows\buildclient.bat
+	Execute: windows\buildSetup.bat
+
+
