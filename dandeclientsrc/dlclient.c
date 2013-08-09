@@ -103,9 +103,10 @@ static gboolean ClientConnectionCallback (GIOChannel * psIOChannel, GIOCondition
   /* Check for data to be read */
   if (nCondition & G_IO_IN) {
   	GIOStatus eStatus;
-    GError * peError;
+    //GError * peError;
     gchar szRead[1024];
     gsize nBytesRead;
+    GError * peError = NULL;
 
     /* Read the data into our buffer */
     eStatus = g_io_channel_read_chars (psIOChannel, szRead, sizeof (szRead), & nBytesRead, & peError);
