@@ -122,8 +122,6 @@
 #define BLUR_FOCUS_SCALEFAR (640.0f)
 #define BLUR_DARKENMAX (0.5f)
 
-#define TEXT_LAYER_ZPOS	(0.95f)
-
 ///////////////////////////////////////////////////////////////////
 // Structures and enumerations
 
@@ -632,7 +630,7 @@ VisPersist * NewVisPersist (void) {
   psVisData->fArrangeLinklen = ARRANGELINKLEN;
   psVisData->fArrangeCentring = ARRANGECENTRING;
   psVisData->fArrangeLinkScalar = ARRANGELINKSCALAR;
-  psVisData->boFadeText = true;
+  psVisData->boFadeText = false;
   psVisData->boNodeSelections = true;
   psVisData->boLinkChanges = false;
   psVisData->psNodeSelected = NULL;

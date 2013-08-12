@@ -34,9 +34,6 @@
 ///////////////////////////////////////////////////////////////////
 // Defines
 
-#define true (1)
-#define false (0)
-
 #define NOTETEXT_FONT       (GLUT_BITMAP_HELVETICA_10)
 #define NOTETEXT_LINEHEIGHT (10)
 #define NOTE_BORDERINT (4.0f)
@@ -169,7 +166,7 @@ void RenderNote (FloatNote * psNote, NotesPersist * psNotesData) {
 				else {
 					glColor4f (1.0, 1.0, 1.0, fFade * NOTE_TEXTFADEMAX);
 				}
-				RenderBitmapString (psNote->vsPos.fX + psNote->fMarginInternal + psNote->fMarginExternal + NOTE_XSHIFT, psNote->vsPos.fY + psNote->vsSize.fY - psNote->fMarginExternal - psNote->fMarginInternal + NOTE_YSHIFT - NOTETEXT_LINEHEIGHT + 2.0f, NOTETEXT_FONT, psNote->szText->str);
+				RenderBitmapString (psNote->vsPos.fX + psNote->fMarginInternal + psNote->fMarginExternal + NOTE_XSHIFT, psNote->vsPos.fY + psNote->vsSize.fY - psNote->fMarginExternal - psNote->fMarginInternal + NOTE_YSHIFT - NOTETEXT_LINEHEIGHT + 2.0f, TEXT_LAYER_ZPOS, NOTETEXT_FONT, psNote->szText->str);
 			}
 		}
 	}
@@ -219,7 +216,7 @@ void RenderNoteAnchor (FloatNote * psNote, NotesPersist * psNotesData) {
 			else {
 				glColor4f (1.0, 1.0, 1.0, fFade * NOTE_TEXTFADEMAX);
 			}
-			RenderBitmapString (psNote->vsAnchor.fX + psNote->fMarginInternal + psNote->fMarginExternal + NOTE_XSHIFT, psNote->vsAnchor.fY + psNote->vsSize.fY - psNote->fMarginExternal - psNote->fMarginInternal + NOTE_YSHIFT - NOTETEXT_LINEHEIGHT + 2.0f, NOTETEXT_FONT, psNote->szText->str);
+			RenderBitmapString (psNote->vsAnchor.fX + psNote->fMarginInternal + psNote->fMarginExternal + NOTE_XSHIFT, psNote->vsAnchor.fY + psNote->vsSize.fY - psNote->fMarginExternal - psNote->fMarginInternal + NOTE_YSHIFT - NOTETEXT_LINEHEIGHT + 2.0f, TEXT_LAYER_ZPOS, NOTETEXT_FONT, psNote->szText->str);
 		}
 	}
 }

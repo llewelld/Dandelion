@@ -302,7 +302,8 @@ void EndElement (GMarkupParseContext * psContext, gchar const * szElementName, g
           psValue = & nValue;
           break;
         case SETTINGTYPE_BOOL:
-          sscanf (psSettingsData->szText->str, "%d", & boValue);
+          sscanf (psSettingsData->szText->str, "%d", & nValue);
+          boValue = nValue;
           psValue = & boValue;
           break;
         case SETTINGTYPE_FLOAT:

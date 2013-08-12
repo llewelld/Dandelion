@@ -35,6 +35,7 @@ typedef struct _VisPersist VisPersist;
 
 #define SCREENWIDTH         (800)
 #define SCREENHEIGHT        (600)
+#define TEXT_LAYER_ZPOS	(0.95f)
 
 ///////////////////////////////////////////////////////////////////
 // Structures and enumerations
