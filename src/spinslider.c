@@ -85,6 +85,7 @@ SpinSliderLink * CreateSpinSlider (char const * szTitle, float * pfVariable, flo
 
 	// Create the label widget
 	psLabel = gtk_label_new (szTitle);
+	gtk_misc_set_alignment (GTK_MISC (psLabel), 0.0f, 0.5f);
 	
 	// Create the spin button widget
 	psSpin = gtk_spin_button_new_with_range (fMin, fMax, fStepInc);
