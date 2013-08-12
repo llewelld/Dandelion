@@ -31,12 +31,10 @@
 #include "floatnote.h"
 #include "textures.h"
 #include "properties.h"
+#include "shader.h"
 
 ///////////////////////////////////////////////////////////////////
 // Defines
-
-#define true (1)
-#define false (0)
 
 #define NODERADIUS          (0.25)
 #define NODESLICES          (10)
@@ -114,6 +112,17 @@
 
 #define GHOSTLINK_DURATION  (0.5f)
 #define GHOSTLINK_HALFLIFE  (10.0f)
+
+// Blur near from 0 (max) to fFocusNear (none)
+#define BLUR_FOCUS_NEAR (0.75f)
+// Blur far from fFocusFar (min) to 1 (max)
+#define BLUR_FOCUS_FAR (0.35f)
+// The smaller the value the greater the blur
+#define BLUR_FOCUS_SCALENEAR (70.0f)
+#define BLUR_FOCUS_SCALEFAR (640.0f)
+#define BLUR_DARKENMAX (0.5f)
+
+#define TEXT_LAYER_ZPOS	(0.95f)
 
 ///////////////////////////////////////////////////////////////////
 // Structures and enumerations
@@ -247,6 +256,21 @@ struct _VisPersist {
   ServerPersist * psServerData;
   NotesPersist * psNotesData;
 	TexPersist * psTexData;
+
+  // Frame buffer data
+  GLuint uFrameBuffer;
+  GLuint auFrameTextures[2];
+  ShaderPersist * psScreenShader;
+
+	// Focus shader variables
+	// Blur near from 0 (max) to fFocusNear (none)
+	float fFocusNear;
+	// Blur far from fFocusFar (min) to 1 (max)
+	float fFocusFar;
+	// The smaller the value the greater the blur
+	float fFocusScaleNear;
+	float fFocusScaleFar;
+	float fDarkenMax;
 };
 
 typedef struct _SettingsNode {
@@ -345,6 +369,12 @@ void SetLinkSelected (TNode * psNodeSelected, TLink * psLinkSelected, VisPersist
 void SetLinkBidirect (TLink * psLink, bool boBidirect, VisPersist * psVisData);
 void UpdateNodeNoteString (TNode * psNode);
 void UpdateLinkNoteString (TLink * psLink);
+void FramebufferCreate (VisPersist * psVisData);
+void FramebufferDestroy (VisPersist * psVisData);
+void FramebufferResize (VisPersist * psVisData);
+void RenderToFramebuffer (VisPersist * psVisData);
+void RenderFramebufferToScreen (VisPersist * psVisData);
+void WindowPos2f (GLfloat fX, GLfloat fY, GLfloat fZ);
 
 ///////////////////////////////////////////////////////////////////
 // Function definitions
@@ -620,6 +650,19 @@ VisPersist * NewVisPersist (void) {
   psVisData->psTexData = NewTexPersist (TEXNAME_NUM);
   psVisData->psNotesData = NewNotesPersist (psVisData->psTexData);
 
+  // Frame buffer data
+  psVisData->uFrameBuffer = 0u;
+  psVisData->auFrameTextures[0] = 0u;
+  psVisData->auFrameTextures[1] = 0u;
+	psVisData->psScreenShader = NULL;
+
+	// Focus shader variables
+	psVisData->fFocusNear = BLUR_FOCUS_NEAR;
+	psVisData->fFocusFar = BLUR_FOCUS_FAR;
+	psVisData->fFocusScaleNear = BLUR_FOCUS_SCALENEAR;
+	psVisData->fFocusScaleFar = BLUR_FOCUS_SCALEFAR;
+	psVisData->fDarkenMax = BLUR_DARKENMAX;
+
   return psVisData;
 }
 
@@ -764,6 +807,169 @@ void Realise (VisPersist * psVisData) {
 void Unrealise (VisPersist * psVisData) {
   // Delete the OpenGL display lists
   DeleteDisplayLists (psVisData);
+
+	FramebufferDestroy (psVisData);
+}
+
+void FramebufferCreate (VisPersist * psVisData) {
+	// Generate colour and depth buffer textures for the framebuffer
+	glGenTextures (2, psVisData->auFrameTextures);
+
+  // Initialise the framebuffer colour texture
+	glBindTexture (GL_TEXTURE_2D, psVisData->auFrameTextures[0]);
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); 
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, psVisData->nScreenWidth, psVisData->nScreenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+  // Initialise the framebuffer depth texture
+	glBindTexture (GL_TEXTURE_2D, psVisData->auFrameTextures[1]);
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); 
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexImage2D (GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, psVisData->nScreenWidth, psVisData->nScreenHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+	glBindTexture (GL_TEXTURE_2D, 0);
+
+	// Generate the actual framebuffer
+	glGenFramebuffers (1, & psVisData->uFrameBuffer);
+	glBindFramebuffer (GL_FRAMEBUFFER, psVisData->uFrameBuffer);
+
+	// Asign the textures to the framebuffer
+	glFramebufferTexture2D (GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, psVisData->auFrameTextures[0], 0);
+	glFramebufferTexture2D (GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, psVisData->auFrameTextures[1], 0);
+
+	GLenum eFramebufferStatus;
+
+	// Check whether everything worked okay
+	eFramebufferStatus = glCheckFramebufferStatus (GL_DRAW_FRAMEBUFFER);
+	switch (eFramebufferStatus) {
+		case GL_FRAMEBUFFER_UNDEFINED:
+			fprintf (stderr, "Framebuffer undefined.\n");
+			break;
+		case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT :
+			fprintf (stderr, "Framebuffer incomplete attachment,\n");
+			break;
+		case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT :
+			fprintf (stderr, "Framebuffer incomplete missing attachment,\n");
+			break;
+		case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER :
+			fprintf (stderr, "Framebuffer incomplete draw buffer.\n");
+			break;
+		case GL_FRAMEBUFFER_UNSUPPORTED :
+			fprintf (stderr, "Framebuffer unsupported.\n");
+			break;
+		case GL_FRAMEBUFFER_COMPLETE:
+			// Framebuffer okay: do nothing
+			break;
+		default:
+			fprintf (stderr, "Framebuffer status undefined.\n");
+	}
+
+	// Reset the framebuffer back to its default
+	glBindFramebuffer (GL_FRAMEBUFFER, 0);
+}
+
+void FramebufferDestroy (VisPersist * psVisData) {
+	// Delete the framebuffer colour texture
+	if (psVisData->auFrameTextures[0] > 0) {
+		glDeleteTextures (1, & psVisData->auFrameTextures[0]);
+		psVisData->auFrameTextures[0] = 0u;
+	}
+
+	// Delete the framebuffer depth texture
+	if (psVisData->auFrameTextures[1] > 0) {
+		glDeleteTextures (1, & psVisData->auFrameTextures[1]);
+		psVisData->auFrameTextures[1] = 0u;
+	}
+
+	// Delete the framebuffer
+	if (psVisData->uFrameBuffer > 0) {
+		glDeleteFramebuffers (1, & psVisData->uFrameBuffer);
+		psVisData->uFrameBuffer = 0u;
+	}
+}
+
+void FramebufferResize (VisPersist * psVisData) {
+	// Destroy the previous framebuffer objects
+	FramebufferDestroy (psVisData);
+	
+	// Creater new framebuffer objects
+	FramebufferCreate (psVisData);
+}
+
+void RenderToFramebuffer (VisPersist * psVisData) {
+	glBindFramebuffer (GL_FRAMEBUFFER, psVisData->uFrameBuffer);
+}
+
+void RenderFramebufferToScreen (VisPersist * psVisData) {
+	GLuint uShaderProgram;
+	static const GLfloat afVertices[(4 * 3)] = {1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+	static const GLfloat afTexCoords[(4 * 2)] = {1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f};
+	static const GLubyte auIndices[(3 * 2)] = {0, 1, 2, 2, 3, 0};
+	float fFocusNear;
+	float fFocusFar;
+
+	// Set the framebuffer to be the screen
+	glBindFramebuffer (GL_FRAMEBUFFER, 0);
+
+	// Set the co-ordinate system to be the screen in the range (0, 1)
+  glPushAttrib (GL_TRANSFORM_BIT | GL_VIEWPORT_BIT);
+  glMatrixMode (GL_PROJECTION);
+  glPushMatrix ();
+  glLoadIdentity ();
+	gluOrtho2D (0, 1, 0, 1);
+  glMatrixMode (GL_MODELVIEW);
+  glPushMatrix ();
+  glLoadIdentity ();
+
+	glClearColor (1.0f, 0.0f, 0.0f, 1.0f);
+	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	ActivateShader (psVisData->psScreenShader);
+	uShaderProgram = GetShaderProgram (psVisData->psScreenShader);
+
+	glDisable (GL_DEPTH_TEST);
+  glEnable (GL_TEXTURE_2D);
+
+	glActiveTexture (GL_TEXTURE1);
+	glBindTexture (GL_TEXTURE_2D, psVisData->auFrameTextures[1]);
+	glUniform1i (glGetUniformLocation (uShaderProgram, "framebufferDepth" ), 1);
+
+	glActiveTexture (GL_TEXTURE0);
+	glBindTexture (GL_TEXTURE_2D, psVisData->auFrameTextures[0]);
+	glUniform1i (glGetUniformLocation (uShaderProgram, "framebufferTexture" ), 0);
+
+	// Set up the blur level parameters
+	fFocusFar = 1.0f - pow ((1.0f - psVisData->fFocusFar), 8.0f);
+	fFocusNear = psVisData->fFocusFar * fFocusFar;
+	glUniform1f (glGetUniformLocation (uShaderProgram, "fFocusNear" ), fFocusNear);
+	glUniform1f (glGetUniformLocation (uShaderProgram, "fFocusFar" ), fFocusFar);
+	glUniform1f (glGetUniformLocation (uShaderProgram, "fFocusScaleNear" ), psVisData->fFocusScaleNear);
+	glUniform1f (glGetUniformLocation (uShaderProgram, "fFocusScaleFar" ), psVisData->fFocusScaleFar);
+	glUniform1f (glGetUniformLocation (uShaderProgram, "fDarkenMax" ), psVisData->fDarkenMax);
+
+	// Render the box
+	glColor4f (1.0, 1.0, 1.0, 1.0);
+
+	glVertexPointer (3, GL_FLOAT, 0, afVertices);
+	glTexCoordPointer (2, GL_FLOAT, 0, afTexCoords);
+	glDrawElements (GL_TRIANGLES, (3 * 2), GL_UNSIGNED_BYTE, auIndices);
+
+	// Tidy up
+	glBindTexture (GL_TEXTURE_2D, 0);
+  glDisable (GL_TEXTURE_2D);
+	glEnable (GL_DEPTH_TEST);
+
+	DeactivateShader (psVisData->psScreenShader);
+
+	// Reset the co-ordinate system back
+  glPopMatrix ();
+  glMatrixMode (GL_PROJECTION);
+  glPopMatrix ();
+  glPopAttrib ();
 }
 
 void Init (VisPersist * psVisData) {
@@ -774,10 +980,25 @@ void Init (VisPersist * psVisData) {
   TNode * psNodeTo;
   char szName[256];
 #endif
+  char * szShaderVertexSource;
+  char * szShaderFragmentSource;
 
   for (nCount = 0; nCount < MAXKEYS; nCount++) {
     psVisData->aboKeyDown[nCount] = false;
   }
+
+  // Inititalise the shader
+	psVisData->psScreenShader = NewShaderPersist ();
+	szShaderVertexSource = LoadShaderFile (DANDEDIR "/screen.vs");
+	szShaderFragmentSource = LoadShaderFile (DANDEDIR "/screen.fs");
+
+	// Generate the shaders
+	ShaderRegenerateVertex (szShaderVertexSource, psVisData->psScreenShader);
+	ShaderRegenerateFragment (szShaderFragmentSource, psVisData->psScreenShader);
+
+	// Free up any previously loaded shader source
+	g_free (szShaderVertexSource);
+	g_free (szShaderFragmentSource);
 
 #if (TESTNODES > 0)
   // Create some random nodes
@@ -1039,7 +1260,7 @@ void RenderTextInSpace (char const * szText, GLdouble fX, GLdouble fY, GLdouble 
   fX += NODETEXT_XOFF;
   fY += NODETEXT_YOFF;
 
-  RenderBitmapString ((float)fX, (float)fY, NODETEXT_FONT, szText);
+  RenderBitmapString ((float)fX, (float)fY, TEXT_LAYER_ZPOS, NODETEXT_FONT, szText);
   glEnable (GL_LIGHTING);
 }
 
@@ -1106,7 +1327,7 @@ void DeleteDisplayLists (VisPersist * psVisData) {
   psVisData->uStartList = 0;
 }
 
-void Display (VisPersist * psVisData) {
+void Render (VisPersist * psVisData) {
   TNode * psLinkTo;
   TLink * psLink;
   TNode * psNode;
@@ -1218,7 +1439,8 @@ void Display (VisPersist * psVisData) {
   glGetDoublev (GL_PROJECTION_MATRIX, afProjection);
   glGetIntegerv (GL_VIEWPORT, anViewpoert);
   glDisable (GL_LIGHTING);
-  glDisable(GL_DEPTH_TEST);
+  //glDisable(GL_DEPTH_TEST);
+  glDepthFunc (GL_ALWAYS);
 
   // Draw the node text overlay
   if (psVisData->boNodeOverlay) {
@@ -1235,7 +1457,7 @@ void Display (VisPersist * psVisData) {
         fFade = (1.0f - ((fZ - 0.95) * 60.0f));
         if (fFade > 0.0f) {
           glColor4f ((0.5), (1.0), (0.5), fFade);
-          RenderBitmapString ((float)fX, (float)fY, NODETEXT_FONT, psNode->szName->str);
+          RenderBitmapString ((float)fX, (float)fY, (float)fZ, NODETEXT_FONT, psNode->szName->str);
         }
         psNodeListPos = psNodeListPos->next;
       }
@@ -1249,7 +1471,7 @@ void Display (VisPersist * psVisData) {
         gluProject (psNode->vsPos.fX, psNode->vsPos.fY, psNode->vsPos.fZ, afModel, afProjection, anViewpoert, & fX, & fY, & fZ);
         fX += NODETEXT_XOFF;
         fY += NODETEXT_YOFF;
-        RenderBitmapString ((float)fX, (float)fY, NODETEXT_FONT, psNode->szName->str);
+        RenderBitmapString ((float)fX, (float)fY, (float)fZ, NODETEXT_FONT, psNode->szName->str);
         psNodeListPos = psNodeListPos->next;
       }
     }
@@ -1277,7 +1499,7 @@ void Display (VisPersist * psVisData) {
 						fFade = (1.0f - ((fZ - 0.95) * 60.0f));
 						if (fFade > 0.0f) {
 						  glColor4f ((0.5), (1.0), (0.5), fFade);
-						  RenderBitmapString ((float)fX, (float)fY, LINKTEXT_FONT, psLink->szName->str);
+						  RenderBitmapString ((float)fX, (float)fY, (float)fZ, LINKTEXT_FONT, psLink->szName->str);
 						}
 					}
 
@@ -1302,7 +1524,7 @@ void Display (VisPersist * psVisData) {
 						gluProject ((psNode->vsPos.fX + psLinkTo->vsPos.fX) / 2.0, (psNode->vsPos.fY + psLinkTo->vsPos.fY) / 2.0, (psNode->vsPos.fZ + psLinkTo->vsPos.fZ) / 2.0, afModel, afProjection, anViewpoert, & fX, & fY, & fZ);
 						fX += LINKTEXT_XOFF;
 						fY += LINKTEXT_YOFF;
-					  RenderBitmapString ((float)fX, (float)fY, LINKTEXT_FONT, psLink->szName->str);
+					  RenderBitmapString ((float)fX, (float)fY, (float)fZ, LINKTEXT_FONT, psLink->szName->str);
 					}
 
 		      psLinkListPos = psLinkListPos->next;
@@ -1318,7 +1540,7 @@ void Display (VisPersist * psVisData) {
     fX += NODETEXT_XOFF;
     fY += NODETEXT_YOFF;
     glColor3f (NODESELTEXT_COLOUR);
-    RenderBitmapString ((float)fX, (float)fY, NODETEXT_FONT, psNode->szName->str);
+    RenderBitmapString ((float)fX, (float)fY, (float)fZ, NODETEXT_FONT, psNode->szName->str);
   }
 
   if (psVisData->psLinkSelected) {
@@ -1328,11 +1550,12 @@ void Display (VisPersist * psVisData) {
 		  fX += LINKTEXT_XOFF;
 		  fY += LINKTEXT_YOFF;
 		  glColor3f (LINKSELTEXT_COLOUR);
-		  RenderBitmapString ((float)fX, (float)fY, LINKTEXT_FONT, psLink->szName->str);
+		  RenderBitmapString ((float)fX, (float)fY, (float)fZ, LINKTEXT_FONT, psLink->szName->str);
 		}
   }
 
-  glEnable(GL_DEPTH_TEST);
+  //glEnable(GL_DEPTH_TEST);
+  glDepthFunc (GL_LESS);
   glEnable (GL_LIGHTING);
 
 	UpdateNoteAnchors (psVisData);
@@ -1611,12 +1834,12 @@ void DrawTextOverlay (VisPersist * psVisData) {
   }
   ulTime = (unsigned long)psVisData->fCurrentTime;
   pTm = gmtime (& ulTime);
-  RenderBitmapString (2.0, psVisData->nScreenHeight - 20, GLUT_BITMAP_HELVETICA_10, asctime (pTm));
+  RenderBitmapString (2.0, psVisData->nScreenHeight - 20, TEXT_LAYER_ZPOS, GLUT_BITMAP_HELVETICA_10, asctime (pTm));
 
   glEnable (GL_LIGHTING);
 }
 
-void WindowPos2f (GLfloat fX, GLfloat fY) {
+void WindowPos2f (GLfloat fX, GLfloat fY, GLfloat fZ) {
   GLfloat fXn, fYn;
 
   glPushAttrib (GL_TRANSFORM_BIT | GL_VIEWPORT_BIT);
@@ -1627,7 +1850,7 @@ void WindowPos2f (GLfloat fX, GLfloat fY) {
   glPushMatrix ();
   glLoadIdentity ();
 
-  glDepthRange (0, 0);
+  glDepthRange (fZ, fZ);
   glViewport ((int) fX - 1, (int) fY - 1, 2, 2);
   fXn = fX - (int) fX;
   fYn = fY - (int) fY;
@@ -1639,18 +1862,18 @@ void WindowPos2f (GLfloat fX, GLfloat fY) {
   glPopAttrib ();
 }
 
-void RenderBitmapString (float fX, float fY, void * pFont, char const * szString) {
+void RenderBitmapString (float fX, float fY, float fZ, void * pFont, char const * szString) {
   int nPos;
   int nLine;
 
 	nLine = 0;
-  WindowPos2f (fX, fY);
+  WindowPos2f (fX, fY, fZ);
   nPos = 0;
   while (szString[nPos] > 0) {
     glutBitmapCharacter (pFont, szString[nPos]);
     if (szString[nPos] == '\n') {
     	nLine++;
-		  WindowPos2f (fX, fY - (nLine * 10));
+		  WindowPos2f (fX, fY - (nLine * 10), fZ);
     }
     nPos++;
   }
@@ -1946,11 +2169,6 @@ void Shake (VisPersist * psVisData) {
 }
 
 void Reshape (int nWidth, int nHeight, VisPersist * psVisData) {
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-
-  glViewport(0, 0, nWidth, nHeight);
-
   psVisData->nScreenWidth = nWidth;
   psVisData->nScreenHeight = nHeight;
 
@@ -1959,15 +2177,22 @@ void Reshape (int nWidth, int nHeight, VisPersist * psVisData) {
     psVisData->nPrevScreenHeight = psVisData->nScreenHeight;
   }
 
+	FramebufferResize (psVisData);
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glViewport(0, 0, nWidth, nHeight);
   gluPerspective(60, (float)nWidth / (float)nHeight, 1, 100);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
-  gluLookAt ((psVisData->fViewRadius) * psVisData->fX, (psVisData->fViewRadius) * psVisData->fY,
-    (psVisData->fViewRadius) * psVisData->fZ, 0.0, 0.0, 0.0, psVisData->fXn, psVisData->fYn, psVisData->fZn);
+  gluLookAt ((psVisData->fViewRadius) * psVisData->fX, (psVisData->fViewRadius) * psVisData->fY, (psVisData->fViewRadius) * psVisData->fZ, 0.0, 0.0, 0.0, psVisData->fXn, psVisData->fYn, psVisData->fZn);
 }
 
 void Redraw (VisPersist * psVisData) {
+	// Initially render to the framebuffer
+	RenderToFramebuffer (psVisData);
+
   if (psVisData->boClearWhite) {
     glClearColor (1.0f, 1.0f, 1.0f, 0.0f);
   }
@@ -1976,11 +2201,16 @@ void Redraw (VisPersist * psVisData) {
   }
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glPushMatrix ();
-  Display (psVisData);
+  Render (psVisData);
   DrawTextOverlay (psVisData);
   glPopMatrix ();
 
   //glutSwapBuffers();
+
+	// Render the framebuffer to screen
+	RenderFramebufferToScreen (psVisData);
+
+	glFlush ();
 }
 
 void Mouse (int button, int state, int x, int y, VisPersist * psVisData) {
@@ -2407,6 +2637,58 @@ void SetDisplayProperties (float fViewRadius, float fLinkLen, float fCentring, f
   psVisData->fArrangeForce = fForce;
   psVisData->fArrangeResistance = fResistance;
   psVisData->fArrangeLinkScalar = fLinkScalar;
+}
+
+float GetViewRadius (VisPersist * psVisData) {
+	return psVisData->fViewRadius;
+}
+
+float * GetVariableViewRadius (VisPersist * psVisData) {
+	return & psVisData->fViewRadius;
+}
+
+float * GetVariableLinkLen (VisPersist * psVisData) {
+	return & psVisData->fArrangeLinklen;
+}
+
+float * GetVariableCentring (VisPersist * psVisData) {
+	return & psVisData->fArrangeCentring;
+}
+
+float * GetVariableRigidity (VisPersist * psVisData) {
+	return & psVisData->fArrangeRigidity;
+}
+
+float * GetVariableForce (VisPersist * psVisData) {
+	return & psVisData->fArrangeForce;
+}
+
+float * GetVariableResistance (VisPersist * psVisData) {
+	return & psVisData->fArrangeResistance;
+}
+
+float * GetVariableLinkScalar (VisPersist * psVisData) {
+	return & psVisData->fArrangeLinkScalar;
+}
+
+float * GetVariableFocusNear (VisPersist * psVisData) {
+	return & psVisData->fFocusNear;
+}
+
+float * GetVariableFocusFar (VisPersist * psVisData) {
+	return & psVisData->fFocusFar;
+}
+
+float * GetVariableFocusScaleNear (VisPersist * psVisData) {
+	return & psVisData->fFocusScaleNear;
+}
+
+float * GetVariableFocusScaleFar (VisPersist * psVisData) {
+	return & psVisData->fFocusScaleFar;
+}
+
+float * GetVariableFocusDarkenMax (VisPersist * psVisData) {
+	return & psVisData->fDarkenMax;
 }
 
 void Key (unsigned char key, int x, int y, unsigned int uKeyModifiers, VisPersist * psVisData) {

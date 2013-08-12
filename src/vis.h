@@ -104,7 +104,7 @@ gboolean GetMoving (VisPersist * psVisData);
 void SaveSettingsVis (SettingsPersist * psSettingsData, VisPersist * psVisData);
 void LoadSettingsStartVis (SettingsPersist * psSettingsData, VisPersist * psVisData);
 void LoadSettingsEndVis (SettingsPersist * psSettingsData, VisPersist * psVisData);
-void RenderBitmapString (float fX, float fY, void * pFont, char const * szString);
+void RenderBitmapString (float fX, float fY, float fZ, void * pFont, char const * szString);
 NotesPersist * GetNotesPersist (VisPersist * psVisData);
 
 void SetNodeProperty (char const * szName, char const * szProperty, char const * szType, char const * szValue, VisPersist * psVisData);
@@ -112,6 +112,19 @@ void SubNodeProperty (char const * szName, char const * szProperty, VisPersist *
 void SetLinkProperty (char const * szName, char const * szProperty, char const * szType, char const * szValue, VisPersist * psVisData);
 void SubLinkProperty (char const * szName, char const * szProperty, VisPersist * psVisData);
 
+float GetViewRadius (VisPersist * psVisData);
+float * GetVariableViewRadius (VisPersist * psVisData);
+float * GetVariableLinkLen (VisPersist * psVisData);
+float * GetVariableCentring (VisPersist * psVisData);
+float * GetVariableRigidity (VisPersist * psVisData);
+float * GetVariableForce (VisPersist * psVisData);
+float * GetVariableResistance (VisPersist * psVisData);
+float * GetVariableLinkScalar (VisPersist * psVisData);
+float * GetVariableFocusNear (VisPersist * psVisData);
+float * GetVariableFocusFar (VisPersist * psVisData);
+float * GetVariableFocusScaleNear (VisPersist * psVisData);
+float * GetVariableFocusScaleFar (VisPersist * psVisData);
+float * GetVariableFocusDarkenMax (VisPersist * psVisData);
 
 ///////////////////////////////////////////////////////////////////
 // Function definitions

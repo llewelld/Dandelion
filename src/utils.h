@@ -16,10 +16,19 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
+#ifndef M_TWOPI
+#define M_TWOPI (M_PI * 2.0)
+#endif
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
+#include <GLee.h>
 #include <glib.h>
 #include <GL/glut.h>
 #include <gtk/gtk.h>
+#include <stdbool.h>
 
 ///////////////////////////////////////////////////////////////////
 // Defines
@@ -30,8 +39,6 @@
 
 ///////////////////////////////////////////////////////////////////
 // Structures and enumerations
-
-typedef int bool;
 
 typedef struct _Vector3 {
   GLfloat fX;

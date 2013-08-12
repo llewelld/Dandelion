@@ -33,6 +33,7 @@
 #include "vis.h"
 #include "server.h"
 #include "settings.h"
+#include "spinslider.h"
 
 ///////////////////////////////////////////////////////////////////
 // Defines
@@ -54,6 +55,8 @@ struct _DandePersist {
   guint TimeoutID;
   GladeXML * psXML;
   gboolean boButtonBarHidden;
+  SpinSliderPersist * psSpinSliderData;
+  SpinSliderLink * psZoomSpinSlider;
 };
 
 ///////////////////////////////////////////////////////////////////
@@ -89,8 +92,8 @@ static gboolean ShakeNodes (GtkWidget * psWidget, gpointer psData);
 static gboolean ClearNodes (GtkWidget * psWidget, gpointer psData);
 void SetDisplayPropertiesDialogue (DandePersist * psDandeData);
 void SetDisplayPropertiesValues (DandePersist * psDandeData);
-static gboolean DisplayPropertiesSpinChanged (GtkWidget * psWidget, gpointer psData);
-static gboolean DisplayPropertiesSliderChanged (GtkWidget * psWidget, gpointer psData);
+//static gboolean DisplayPropertiesSpinChanged (GtkWidget * psWidget, gpointer psData);
+//static gboolean DisplayPropertiesSliderChanged (GtkWidget * psWidget, gpointer psData);
 static gboolean ConfigureDialogueOpen (GtkWidget * psWidget, gpointer psData);
 static gboolean ConfigureDialogueOK (GtkWidget * psWidget, gpointer psData);
 void SetConfigureDialogue (DandePersist * psDandeData);
@@ -116,6 +119,7 @@ DandePersist * NewDandePersist (void) {
   psDandeData->boTimeoutContinue = FALSE;
   psDandeData->TimeoutID = 0;
   psDandeData->boButtonBarHidden = FALSE;
+  psDandeData->psSpinSliderData = NewSpinSliderPersist ();
 
   return psDandeData;
 }
@@ -124,6 +128,11 @@ void DeleteDandePersist (DandePersist * psDandeData) {
   if (psDandeData->psVisData) {
     DeleteVisPersist (psDandeData->psVisData);
     psDandeData->psVisData = NULL;
+  }
+  
+  if (psDandeData->psSpinSliderData) {
+  	DeleteSpinSliderPersist (psDandeData->psSpinSliderData);
+  	psDandeData->psSpinSliderData = NULL;
   }
 
   g_free (psDandeData);
@@ -286,21 +295,18 @@ static gboolean KeyReleaseEvent (GtkWidget * psWidget, GdkEventKey * psEvent, gp
 
 static gboolean ScrollEvent (GtkWidget * psWidget, GdkEventScroll * psEvent, gpointer psData) {
   DandePersist * psDandeData = (DandePersist * )psData;
-  GtkWidget * psWidgetSet;
   float fRadius;
 
   switch (psEvent->direction) {
     case GDK_SCROLL_UP:
-      psWidgetSet = glade_xml_get_widget (psDandeData->psXML, "Zoom");
-      fRadius = gtk_spin_button_get_value (GTK_SPIN_BUTTON (psWidgetSet));
+			fRadius = GetViewRadius (psDandeData->psVisData);
       fRadius += RADIUS_SCROLL;
-      gtk_spin_button_set_value (GTK_SPIN_BUTTON (psWidgetSet), fRadius);
+			SpinSliderSetValue (fRadius, psDandeData->psZoomSpinSlider);
       break;
     case GDK_SCROLL_DOWN:
-      psWidgetSet = glade_xml_get_widget (psDandeData->psXML, "Zoom");
-      fRadius = gtk_spin_button_get_value (GTK_SPIN_BUTTON (psWidgetSet));
+			fRadius = GetViewRadius (psDandeData->psVisData);
       fRadius -= RADIUS_SCROLL;
-      gtk_spin_button_set_value (GTK_SPIN_BUTTON (psWidgetSet), fRadius);
+			SpinSliderSetValue (fRadius, psDandeData->psZoomSpinSlider);
       break;
     default:
       // Do nothing
@@ -625,58 +631,58 @@ void SetDisplayPropertiesValues (DandePersist * psDandeData) {
     psDandeData->psVisData);
 }
 
-static gboolean DisplayPropertiesSpinChanged (GtkWidget * psWidget, gpointer psData) {
-  DandePersist * psDandeData = (DandePersist * )psData;
-  GtkWidget * psWidgetSet;
-  float fValue;
-  const char * szName;
-  GString * szTransfer;
+//static gboolean DisplayPropertiesSpinChanged (GtkWidget * psWidget, gpointer psData) {
+//  DandePersist * psDandeData = (DandePersist * )psData;
+//  GtkWidget * psWidgetSet;
+//  float fValue;
+//  const char * szName;
+//  GString * szTransfer;
 
-  // Transfer value to slider
-  szName = glade_get_widget_name (psWidget);
+//  // Transfer value to slider
+//  szName = glade_get_widget_name (psWidget);
 
-  szTransfer = g_string_new (szName);
-  g_string_append (szTransfer, "Slider");
+//  szTransfer = g_string_new (szName);
+//  g_string_append (szTransfer, "Slider");
 
-  fValue = gtk_spin_button_get_value_as_float (GTK_SPIN_BUTTON (psWidget));
-  psWidgetSet = glade_xml_get_widget (psDandeData->psXML, szTransfer->str);
-  gtk_range_set_value (GTK_RANGE (psWidgetSet), fValue);
+//  fValue = gtk_spin_button_get_value_as_float (GTK_SPIN_BUTTON (psWidget));
+//  psWidgetSet = glade_xml_get_widget (psDandeData->psXML, szTransfer->str);
+//  gtk_range_set_value (GTK_RANGE (psWidgetSet), fValue);
 
-  g_string_free (szTransfer, TRUE);
+//  g_string_free (szTransfer, TRUE);
 
-  // Update the values
-  SetDisplayPropertiesValues (psDandeData);
+//  // Update the values
+//  SetDisplayPropertiesValues (psDandeData);
 
-  return TRUE;
-}
+//  return TRUE;
+//}
 
-static gboolean DisplayPropertiesSliderChanged (GtkWidget * psWidget, gpointer psData) {
-  DandePersist * psDandeData = (DandePersist * )psData;
-  GtkWidget * psWidgetSet;
-  float fValue;
-  const char * szName;
-  GString * szTransfer;
-  int nLength;
+//static gboolean DisplayPropertiesSliderChanged (GtkWidget * psWidget, gpointer psData) {
+//  DandePersist * psDandeData = (DandePersist * )psData;
+//  GtkWidget * psWidgetSet;
+//  float fValue;
+//  const char * szName;
+//  GString * szTransfer;
+//  int nLength;
 
-  // Transfer value to spin button
-  szName = glade_get_widget_name (psWidget);
+//  // Transfer value to spin button
+//  szName = glade_get_widget_name (psWidget);
 
-  szTransfer = g_string_new (szName);
-  nLength = szTransfer->len - sizeof ("Slider") + 1;
-  if (nLength > 0) {
-    g_string_truncate (szTransfer, nLength);
+//  szTransfer = g_string_new (szName);
+//  nLength = szTransfer->len - sizeof ("Slider") + 1;
+//  if (nLength > 0) {
+//    g_string_truncate (szTransfer, nLength);
 
-    fValue = gtk_range_get_value (GTK_RANGE (psWidget));
-    psWidgetSet = glade_xml_get_widget (psDandeData->psXML, szTransfer->str);
-    gtk_spin_button_set_value (GTK_SPIN_BUTTON (psWidgetSet), fValue);
-  }
+//    fValue = gtk_range_get_value (GTK_RANGE (psWidget));
+//    psWidgetSet = glade_xml_get_widget (psDandeData->psXML, szTransfer->str);
+//    gtk_spin_button_set_value (GTK_SPIN_BUTTON (psWidgetSet), fValue);
+//  }
 
-  g_string_free (szTransfer, TRUE);
+//  g_string_free (szTransfer, TRUE);
 
-  // The values will be updated if the Spin Button value changes
+//  // The values will be updated if the Spin Button value changes
 
-  return TRUE;
-}
+//  return TRUE;
+//}
 
 int main (int argc, char *argv[]) {
   GdkGLConfig * GlConfig;
@@ -685,6 +691,7 @@ int main (int argc, char *argv[]) {
   VisPersist * psVisData;
   DandePersist * psDandeData;
   ServerPersist * psServerData = NULL;
+  float * pfVariable;
 
   // Initialise various libraries
   gtk_init (&argc, &argv);
@@ -700,17 +707,14 @@ int main (int argc, char *argv[]) {
   psServerData = NewServerPersist (DEFAULT_PORT, psVisData);
   VisSetServer (psServerData, psVisData);
 
-  // Initialise visualisation
-  Init (psVisData);
-
   // First try double buffering
-  GlConfig = gdk_gl_config_new_by_mode (GDK_GL_MODE_RGBA | GDK_GL_MODE_DEPTH  | GDK_GL_MODE_DOUBLE | GDK_GL_MODE_ALPHA);
+  GlConfig = gdk_gl_config_new_by_mode (GDK_GL_MODE_RGBA | GDK_GL_MODE_DEPTH  | GDK_GL_MODE_DOUBLE | GDK_GL_MODE_ALPHA | GDK_GL_MODE_STENCIL);
   if (GlConfig == NULL) {
     g_print ("*** Cannot find the double-buffered visual.\n");
     g_print ("*** Trying single-buffered visual.\n");
 
     // If that fails, we'll try single buffered
-    GlConfig = gdk_gl_config_new_by_mode (GDK_GL_MODE_RGBA | GDK_GL_MODE_DEPTH | GDK_GL_MODE_ALPHA);
+    GlConfig = gdk_gl_config_new_by_mode (GDK_GL_MODE_RGBA | GDK_GL_MODE_DEPTH | GDK_GL_MODE_ALPHA | GDK_GL_MODE_STENCIL);
     if (GlConfig == NULL) {
   	  g_print ("*** No appropriate OpenGL-capable visual found.\n");
   	  exit (1);
@@ -728,7 +732,7 @@ int main (int argc, char *argv[]) {
   // Load settings
   LoadSettingsAll (psDandeData);
 
-  SetDisplayPropertiesDialogue (psDandeData);
+  //SetDisplayPropertiesDialogue (psDandeData);
 
   // Automatically redraw the window children change allocation
   gtk_container_set_reallocate_redraws (GTK_CONTAINER (psWindow), TRUE);
@@ -790,53 +794,56 @@ int main (int argc, char *argv[]) {
   psWidget = glade_xml_get_widget (psDandeData->psXML, "Clear");
   g_signal_connect (psWidget, "clicked", G_CALLBACK (ClearNodes), (gpointer)psDandeData);
 
+	// Add the spin slider widgets
+/*float * GetVariableFocusNear (VisPersist * psVisData);*/
+/*float * GetVariableFocusFar (VisPersist * psVisData);*/
+/*float * GetVariableFocusScaleNear (VisPersist * psVisData);*/
+/*float * GetVariableFocusScaleFar (VisPersist * psVisData);*/
+/*float * GetVariableFocusDarkenMax (VisPersist * psVisData);*/
 
-  psWidget = glade_xml_get_widget (psDandeData->psXML, "Zoom");
-  g_signal_connect (psWidget, "value_changed", G_CALLBACK (DisplayPropertiesSpinChanged), 
-    (gpointer)psDandeData);
-  psWidget = glade_xml_get_widget (psDandeData->psXML, "LinkLen");
-  g_signal_connect (psWidget, "value_changed", G_CALLBACK (DisplayPropertiesSpinChanged), 
-    (gpointer)psDandeData);
-  psWidget = glade_xml_get_widget (psDandeData->psXML, "Centring");
-  g_signal_connect (psWidget, "value_changed", G_CALLBACK (DisplayPropertiesSpinChanged), 
-    (gpointer)psDandeData);
-  psWidget = glade_xml_get_widget (psDandeData->psXML, "Rigidity");
-  g_signal_connect (psWidget, "value_changed", G_CALLBACK (DisplayPropertiesSpinChanged), 
-    (gpointer)psDandeData);
-  psWidget = glade_xml_get_widget (psDandeData->psXML, "Force");
-  g_signal_connect (psWidget, "value_changed", G_CALLBACK (DisplayPropertiesSpinChanged), 
-    (gpointer)psDandeData);
-  psWidget = glade_xml_get_widget (psDandeData->psXML, "Resistance");
-  g_signal_connect (psWidget, "value_changed", G_CALLBACK (DisplayPropertiesSpinChanged), 
-    (gpointer)psDandeData);
-  psWidget = glade_xml_get_widget (psDandeData->psXML, "Scalar");
-  g_signal_connect (psWidget, "value_changed", G_CALLBACK (DisplayPropertiesSpinChanged), 
-    (gpointer)psDandeData);
+  psWidget = glade_xml_get_widget (psDandeData->psXML, "SliderTable");
 
-  psWidget = glade_xml_get_widget (psDandeData->psXML, "ZoomSlider");
-  g_signal_connect (psWidget, "value_changed", G_CALLBACK (DisplayPropertiesSliderChanged), 
-    (gpointer)psDandeData);
-  psWidget = glade_xml_get_widget (psDandeData->psXML, "LinkLenSlider");
-  g_signal_connect (psWidget, "value_changed", G_CALLBACK (DisplayPropertiesSliderChanged), 
-    (gpointer)psDandeData);
-  psWidget = glade_xml_get_widget (psDandeData->psXML, "CentringSlider");
-  g_signal_connect (psWidget, "value_changed", G_CALLBACK (DisplayPropertiesSliderChanged), 
-    (gpointer)psDandeData);
-  psWidget = glade_xml_get_widget (psDandeData->psXML, "RigiditySlider");
-  g_signal_connect (psWidget, "value_changed", G_CALLBACK (DisplayPropertiesSliderChanged), 
-    (gpointer)psDandeData);
-  psWidget = glade_xml_get_widget (psDandeData->psXML, "ForceSlider");
-  g_signal_connect (psWidget, "value_changed", G_CALLBACK (DisplayPropertiesSliderChanged), 
-    (gpointer)psDandeData);
-  psWidget = glade_xml_get_widget (psDandeData->psXML, "ResistanceSlider");
-  g_signal_connect (psWidget, "value_changed", G_CALLBACK (DisplayPropertiesSliderChanged), 
-    (gpointer)psDandeData);
-  psWidget = glade_xml_get_widget (psDandeData->psXML, "ScalarSlider");
-  g_signal_connect (psWidget, "value_changed", G_CALLBACK (DisplayPropertiesSliderChanged), 
-    (gpointer)psDandeData);
+	pfVariable = GetVariableViewRadius (psDandeData->psVisData);
+	psDandeData->psZoomSpinSlider = CreateSpinSlider ("Distance", pfVariable, 2.0, 100.0, 0.2, 10.0, 3, GTK_TABLE (psWidget), psDandeData->psSpinSliderData);
+
+	pfVariable = GetVariableLinkLen (psDandeData->psVisData);
+	CreateSpinSlider ("Link length", pfVariable, 0.0, 20.0, 0.1, 10.0, 3, GTK_TABLE (psWidget), psDandeData->psSpinSliderData);
+
+	pfVariable = GetVariableCentring (psDandeData->psVisData);
+	CreateSpinSlider ("Centring", pfVariable, 0.0, 10.0, 0.01, 10.0, 3, GTK_TABLE (psWidget), psDandeData->psSpinSliderData);
+
+	pfVariable = GetVariableRigidity (psDandeData->psVisData);
+	CreateSpinSlider ("Rigidity", pfVariable, 0.0, 0.5, 0.01, 10.0, 3, GTK_TABLE (psWidget), psDandeData->psSpinSliderData);
+
+	pfVariable = GetVariableForce (psDandeData->psVisData);
+	CreateSpinSlider ("Force", pfVariable, 0.0, 5.0, 0.01, 10.0, 3, GTK_TABLE (psWidget), psDandeData->psSpinSliderData);
+
+	pfVariable = GetVariableResistance (psDandeData->psVisData);
+	CreateSpinSlider ("Resistance", pfVariable, 0.0, 1.0, 0.01, 10.0, 3, GTK_TABLE (psWidget), psDandeData->psSpinSliderData);
+
+	pfVariable = GetVariableLinkScalar (psDandeData->psVisData);
+	CreateSpinSlider ("Dejitter", pfVariable, 0.0, 20.0, 0.01, 10.0, 3, GTK_TABLE (psWidget), psDandeData->psSpinSliderData);
+
+	//pfVariable = GetVariableFocusNear (psDandeData->psVisData);
+	//CreateSpinSlider ("Focus near", pfVariable, 0.0, 1.0, 0.001, 0.01, 3, GTK_TABLE (psWidget), psDandeData->psSpinSliderData);
+
+	pfVariable = GetVariableFocusFar (psDandeData->psVisData);
+	CreateSpinSlider ("Focal length", pfVariable, 0.0, 1.0, 0.001, 0.01, 3, GTK_TABLE (psWidget), psDandeData->psSpinSliderData);
+
+	//pfVariable = GetVariableFocusScaleNear (psDandeData->psVisData);
+	//CreateSpinSlider ("Blur near", pfVariable, 0.0, 1000.0, 10.0, 100.0, 3, GTK_TABLE (psWidget), psDandeData->psSpinSliderData);
+
+	//pfVariable = GetVariableFocusScaleFar (psDandeData->psVisData);
+	//CreateSpinSlider ("Blur far", pfVariable, 0.0, 1000.0, 10.0, 100.0, 3, GTK_TABLE (psWidget), psDandeData->psSpinSliderData);
+
+	//pfVariable = GetVariableFocusDarkenMax (psDandeData->psVisData);
+	//CreateSpinSlider ("Darken", pfVariable, 0.0, 1.0, 0.01, 0.1, 3, GTK_TABLE (psWidget), psDandeData->psSpinSliderData);
 
   // Display the window
   gtk_widget_show (psWindow);
+
+  // Initialise visualisation
+  Init (psVisData);
 
   // Main loop
   gtk_main ();
@@ -855,7 +862,6 @@ int main (int argc, char *argv[]) {
 
   return 0;
 }
-
 
 void SaveSettingsAll (DandePersist * psDandeData) {
   SettingsPersist * psSettingsData = NULL;
