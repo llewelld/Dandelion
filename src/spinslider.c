@@ -48,15 +48,23 @@ SpinSliderPersist * NewSpinSliderPersist (void) {
 	psSpinSliderData = g_new0 (SpinSliderPersist, 1);
 
 	psSpinSliderData->apsSpinSliderLinks = g_ptr_array_new ();
-	g_ptr_array_set_free_func (psSpinSliderData->apsSpinSliderLinks, g_free);
+	//g_ptr_array_set_free_func (psSpinSliderData->apsSpinSliderLinks, g_free);
 
 	return psSpinSliderData;
 }
 
 void DeleteSpinSliderPersist (SpinSliderPersist * psSpinSliderData) {
+	int nLinkPos;
+
 	if (psSpinSliderData) {
 	
 		if (psSpinSliderData->apsSpinSliderLinks) {
+			// Free up all of the elements
+			for (nLinkPos = 0; nLinkPos < psSpinSliderData->apsSpinSliderLinks->len; nLinkPos++) {
+				g_free (psSpinSliderData->apsSpinSliderLinks->pdata[nLinkPos]);
+				psSpinSliderData->apsSpinSliderLinks->pdata[nLinkPos] = NULL;
+			}
+
 			g_ptr_array_free (psSpinSliderData->apsSpinSliderLinks, TRUE);
 			psSpinSliderData->apsSpinSliderLinks = NULL;
 		}
@@ -74,12 +82,12 @@ SpinSliderLink * CreateSpinSlider (char const * szTitle, float * pfVariable, flo
 	SpinSliderLink * psSpinSliderLink;
 
 	// Add an extra row to the table
-	gtk_table_get_size (psParent, & uRows, & uColumns);
-	
+	//gtk_table_get_size (psParent, & uRows, & uColumns);
+	g_object_get (GTK_OBJECT (psParent), "n-columns", & uColumns, "n-rows", & uRows, NULL);
 	if (uColumns < 3) {
 		uColumns = 3;
 	}
-	
+
 	uRows++;
 	gtk_table_resize  (psParent, uRows, uColumns);
 
