@@ -12,11 +12,6 @@
 ///////////////////////////////////////////////////////////////////
 // Includes
 
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN 1
-#include <windows.h>
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
