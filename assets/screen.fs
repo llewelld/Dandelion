@@ -1,7 +1,5 @@
 #version 120
 
-uniform vec3 vPosition, vScale;
-uniform float fTime;
 uniform sampler2D framebufferTexture;
 uniform sampler2D framebufferDepth;
 

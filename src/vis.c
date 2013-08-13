@@ -925,7 +925,8 @@ void RenderFramebufferToScreen (VisPersist * psVisData) {
 	uShaderProgram = GetShaderProgram (psVisData->psScreenShader);
 
 	glDisable (GL_DEPTH_TEST);
-  glEnable (GL_TEXTURE_2D);
+	glEnable (GL_TEXTURE_2D);
+	glEnableClientState (GL_TEXTURE_COORD_ARRAY);
 
 	glActiveTexture (GL_TEXTURE1);
 	glBindTexture (GL_TEXTURE_2D, psVisData->auFrameTextures[1]);
@@ -953,7 +954,8 @@ void RenderFramebufferToScreen (VisPersist * psVisData) {
 
 	// Tidy up
 	glBindTexture (GL_TEXTURE_2D, 0);
-  glDisable (GL_TEXTURE_2D);
+	glDisableClientState (GL_TEXTURE_COORD_ARRAY);
+	glDisable (GL_TEXTURE_2D);
 	glEnable (GL_DEPTH_TEST);
 
 	DeactivateShader (psVisData->psScreenShader);

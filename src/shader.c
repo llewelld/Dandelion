@@ -99,7 +99,7 @@ char * LoadShaderFile (char const * const szFilename) {
 	int nRead;
 
 	szMemory = NULL;	
-	hFile = fopen (szFilename, "r");
+	hFile = fopen (szFilename, "rb");
 	if (hFile) {
 		fseek (hFile, 0, SEEK_END);
 		nLength = ftell (hFile);
@@ -109,6 +109,7 @@ char * LoadShaderFile (char const * const szFilename) {
 		nRead = fread (szMemory, 1, nLength, hFile);
 		if (nRead < nLength) {
 			fprintf (stderr, "Shader file incompletely read.\n");
+			fprintf (stderr, "Read %d out of %d bytes\n", nRead, nLength);
 		}
 		fclose (hFile);
 	}

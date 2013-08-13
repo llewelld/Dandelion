@@ -1,3 +1,6 @@
+@REM Windows build file using MingGW
+@REM Add -mconsole to the gcc commands to allow console output
+
 cd src
 del *.o
 

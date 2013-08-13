@@ -1,11 +1,6 @@
 #include "utils.h"
 #include "textures.h"
 
-#ifdef _WIN32
-// Windows OpenGL headers have stoped at 1.1
-#define GL_CLAMP_TO_EDGE 0x812F
-#endif
-
 struct _TexPersist {
   GLuint * aunTextureName;
   int nMaxTextures;
@@ -36,7 +31,7 @@ void DeleteTexPersist (TexPersist * psTexData) {
 }
 
 void LoadTextures (TexPersist * psTexData) {
-  LoadTextureRaw ("assets//Notes.raw", 32, 32, TRUE, psTexData);
+  LoadTextureRaw (DANDEDIR "/Notes.raw", 32, 32, TRUE, psTexData);
 }
 
 GLuint GetTexture (TEXNAME eTexture, GLfloat afTexCoords[], TexPersist * psTexData) {

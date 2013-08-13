@@ -139,7 +139,7 @@ void RenderNote (FloatNote * psNote, NotesPersist * psNotesData) {
 				uTexture = GetTexture (TEXNAME_NOTES, NULL, psNotesData->psTexData);
 				glBindTexture (GL_TEXTURE_2D, uTexture);
 				glEnable (GL_TEXTURE_2D);
-			  glEnableClientState (GL_TEXTURE_COORD_ARRAY);
+				glEnableClientState (GL_TEXTURE_COORD_ARRAY);
 				RenderBox (psNote->vsPos.fX + psNote->fMarginExternal + NOTE_XSHIFT, psNote->vsPos.fY + psNote->fMarginExternal + NOTE_YSHIFT, psNote->vsPos.fX + psNote->vsSize.fX - psNote->fMarginExternal + NOTE_XSHIFT, psNote->vsPos.fY + psNote->vsSize.fY - psNote->fMarginExternal + NOTE_YSHIFT, NOTE_BORDERWIDTH, uTexture);
 
 				afVertices[0]  = psNote->vsAnchor.fX;
@@ -150,7 +150,7 @@ void RenderNote (FloatNote * psNote, NotesPersist * psNotesData) {
 				afVertices[5]  = 0.0f;
 
 				glDisable (GL_TEXTURE_2D);
-			  glDisableClientState (GL_TEXTURE_COORD_ARRAY);
+				glDisableClientState (GL_TEXTURE_COORD_ARRAY);
 				glColor4f (0.5, 0.5, 1.0, fFade * 0.7f);
 				glVertexPointer (3, GL_FLOAT, 0, afVertices);
 				glDrawArrays (GL_LINE_STRIP, 0, 2);
