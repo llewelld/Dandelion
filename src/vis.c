@@ -389,7 +389,7 @@ TNode * AddNode (char const * szName, VisPersist * psVisData) {
       psNodeNew->vsPos.fY = 0.0f;
     }
     // Add the FloatNote structure
-    psNodeNew->psNote = AddFloatNote (psNodeNew->vsPos.fX, psNodeNew->vsPos.fY, "", psVisData->psNotesData);
+    psNodeNew->psNote = AddFloatNote (& psNodeNew->vsPos, "", psVisData->psNotesData);
 
 		// Add the node to the lists
     psVisData->psNodeList = g_slist_prepend (psVisData->psNodeList, (gpointer)psNodeNew);
@@ -944,6 +944,7 @@ void RenderFramebufferToScreen (VisPersist * psVisData) {
 	glUniform1f (glGetUniformLocation (uShaderProgram, "fFocusScaleNear" ), psVisData->fFocusScaleNear);
 	glUniform1f (glGetUniformLocation (uShaderProgram, "fFocusScaleFar" ), psVisData->fFocusScaleFar);
 	glUniform1f (glGetUniformLocation (uShaderProgram, "fDarkenMax" ), psVisData->fDarkenMax);
+	SetNoteFocusFar (fFocusFar * 0.95f / 0.97f, psVisData->psNotesData);
 
 	// Render the box
 	glColor4f (1.0, 1.0, 1.0, 1.0);
@@ -1060,6 +1061,7 @@ TLink * AddLinkDirect (char const * szName, TNode * psNodeFrom, TNode * psNodeTo
   GSList * psListItem;
   TLink * psNewLink = NULL;
   TLink * psCompareLink;
+  Vector3 vsAnchor;
 
   // We're not going to allow links from a node to itself. It'll mess up our arc cosines.
   if (psNodeFrom != psNodeTo) {
@@ -1083,7 +1085,10 @@ TLink * AddLinkDirect (char const * szName, TNode * psNodeFrom, TNode * psNodeTo
 				psNewLink->eType = boBidirect?LINKTYPE_BIDIRECTIONAL:LINKTYPE_UNIDIRECTIONAL;
 
 				// Add the FloatNote structure
-				psNewLink->psNote = AddFloatNote ((psNodeFrom->vsPos.fX + psNodeTo->vsPos.fX) / 2.0f, (psNodeFrom->vsPos.fY + psNodeTo->vsPos.fY) / 2.0f, "", psVisData->psNotesData);
+				
+				AddVectors (& vsAnchor, & psNodeFrom->vsPos, & psNodeTo->vsPos);
+				ScaleVector (& vsAnchor, & vsAnchor, 0.5f);
+				psNewLink->psNote = AddFloatNote (& vsAnchor, "", psVisData->psNotesData);
 
 		    psNodeFrom->psLinksOut = g_slist_prepend (psNodeFrom->psLinksOut, psNewLink);
 		    psNodeFrom->nLinksOut++;
@@ -1106,7 +1111,9 @@ TLink * AddLinkDirect (char const * szName, TNode * psNodeFrom, TNode * psNodeTo
 				psNewLink->eType = boBidirect?LINKTYPE_BIDIRECTIONAL:LINKTYPE_UNIDIRECTIONAL;
 
 				// Add the FloatNote structure
-				psNewLink->psNote = AddFloatNote ((psNodeFrom->vsPos.fX + psNodeTo->vsPos.fX) / 2.0f, (psNodeFrom->vsPos.fY + psNodeTo->vsPos.fY) / 2.0f, "", psVisData->psNotesData);
+				AddVectors (& vsAnchor, & psNodeFrom->vsPos, & psNodeTo->vsPos);
+				ScaleVector (& vsAnchor, & vsAnchor, 0.5f);
+				psNewLink->psNote = AddFloatNote (& vsAnchor, "", psVisData->psNotesData);
 
 		    psNodeFrom->psLinksOut = g_slist_prepend (psNodeFrom->psLinksOut, psNewLink);
 		    psNodeFrom->nLinksOut++;
@@ -1552,11 +1559,6 @@ void Render (VisPersist * psVisData) {
   //glEnable(GL_DEPTH_TEST);
   glDepthFunc (GL_LESS);
   glEnable (GL_LIGHTING);
-
-	UpdateNoteAnchors (psVisData);
-	RenderNotes (psVisData->psNotesData);
-
-  glFlush ();
 
   //glMaterialfv (GL_FRONT_AND_BACK, GL_SPECULAR, gSphereSpecular);
   //glMaterialfv (GL_FRONT_AND_BACK, GL_SHININESS, gSphereShininess);
@@ -2198,12 +2200,17 @@ void Redraw (VisPersist * psVisData) {
   glPushMatrix ();
   Render (psVisData);
   DrawTextOverlay (psVisData);
+
+	UpdateNoteAnchors (psVisData);
+
   glPopMatrix ();
 
   //glutSwapBuffers();
 
 	// Render the framebuffer to screen
 	RenderFramebufferToScreen (psVisData);
+
+	RenderNotes (psVisData->psNotesData);
 
 	glFlush ();
 }
@@ -3376,7 +3383,13 @@ void UpdateNoteAnchors (VisPersist * psVisData) {
     psNote = (FloatNote *)psNode->psNote;
 
 		gluProject (psNode->vsPos.fX, psNode->vsPos.fY, psNode->vsPos.fZ, afModel, afProjection, anViewpoert, & fX, & fY, & fZ);
+
+		// Move the note relative to the new anchor position so that it doesn't bounce around
+		psNote->vsPos.fX += (fX - psNote->vsAnchor.fX);
+		psNote->vsPos.fY += (fY - psNote->vsAnchor.fY);
+		psNote->vsPos.fZ += (fZ - psNote->vsAnchor.fZ);
 		
+		// Move the note anchor with the node
 		psNote->vsAnchor.fX = fX;
 		psNote->vsAnchor.fY = fY;
 		psNote->vsAnchor.fZ = fZ;
@@ -3391,7 +3404,13 @@ void UpdateNoteAnchors (VisPersist * psVisData) {
 		  psNote = (FloatNote *)psLink->psNote;
 
 			gluProject ((psNode->vsPos.fX + psLinkTo->vsPos.fX) / 2.0f, (psNode->vsPos.fY + psLinkTo->vsPos.fY) / 2.0f, (psNode->vsPos.fZ + psLinkTo->vsPos.fZ) / 2.0f, afModel, afProjection, anViewpoert, & fX, & fY, & fZ);
+
+			// Move the note relative to the new anchor position so that it doesn't bounce around
+			psNote->vsPos.fX += (fX - psNote->vsAnchor.fX);
+			psNote->vsPos.fY += (fY - psNote->vsAnchor.fY);
+			psNote->vsPos.fZ += (fZ - psNote->vsAnchor.fZ);
 		
+			// Move the note anchor with the link
 			psNote->vsAnchor.fX = fX;
 			psNote->vsAnchor.fY = fY;
 			psNote->vsAnchor.fZ = fZ;

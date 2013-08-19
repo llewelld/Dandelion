@@ -75,6 +75,8 @@ float DotProdAngle (float fX1, float fY1, float fX2, float fY2);
 Vector3 MultMatrixVector (Matrix3 * m1, Vector3 * v1);
 void PrintMatrix (Matrix3 * m1);
 void PrintVector (Vector3 * v1);
+void AddVectors (Vector3 * pvsAddition, Vector3 const * pvsV1, Vector3 const * pvsV2);
+void ScaleVector (Vector3 * pvsScaled, Vector3 const * pvsV1, float fScale);
 
 ///////////////////////////////////////////////////////////////////
 // Function definitions

@@ -48,7 +48,7 @@ void DeleteNotesPersist (NotesPersist * psNotesData);
 
 void RenderNotes (NotesPersist * psNotesData);
 void UpdateNotes (NotesPersist * psNotesData);
-FloatNote * AddFloatNote (float fXAnchor, float fYAnchor, char * szText, NotesPersist * psNotesData);
+FloatNote * AddFloatNote (Vector3 const * pvsAnchor, char * szText, NotesPersist * psNotesData);
 void RemoveFloatNote (FloatNote * psNote, NotesPersist * psNotesData);
 void SetNoteTethering (float fTethering, NotesPersist * psNotesData);
 float GetNoteTethering (NotesPersist * psNotesData);
@@ -61,6 +61,7 @@ void ToggleNoteInverted (NotesPersist * psNotesData);
 void SetNoteSelected (FloatNote * psSelectedNote, NotesPersist * psNotesData);
 void SetNoteText (FloatNote * psNote, char const * szText);
 void RemoveAllNotes (NotesPersist * psNotesData);
+void SetNoteFocusFar (float fFocusFar, NotesPersist * psNotesData);
 
 ///////////////////////////////////////////////////////////////////
 // Function definitions
