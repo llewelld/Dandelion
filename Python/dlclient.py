@@ -2,91 +2,116 @@
 
 """
 A simple Dandelion client.
+This can be used to communicate with a Dandelion server for
+the purposes of visualising 3D networks.
+
+http://www.flypig.co.uk/?to=dandelion
+
+David Llewellyn-Jones
+Liverpool John Moores University
+Summer 2013
+
+Released under an LGPL licence.
 """
 
 import socket
 import threading
 
 class DlClient(threading.Thread):
+	"""
+	The main DlClient class encapsulates everything needed to
+	communicate with a Dandelion server.
+	
+	The following is a simple example of its use.
+	
+	import dlclient
+	
+	dlclient = DlClient()
+	dlclient.setHost("localhost")
+	dlclient.addNode("FirstNode")
+	dlclient.addNode("SecondNode")
+	dlclient.addLink("MainLink", "FirstNode", "SecondNode")
+	dlclient.quit()
+	"""
+
+	# Main class and thread methods
+
 	def __init__(self):
+		"""
+		Class constructor.
+		Initialise the class variables and start
+		the network thread.
+		"""
 		threading.Thread.__init__(self)
 		self.host = 'localhost'
 		self.port = 4972
-		self.size = 1024
-		self.active = False
-		self.buffer = []
-		self.sock = None
-		self.cond = threading.Condition()
-		self.paused = False
+		self._size = 1024
+		self._active = False
+		self._buffer = []
+		self._sock = None
+		self._cond = threading.Condition()
+		self._paused = False
 		self.start()
 
 	def __del__(self):
+		"""
+		Class destructor.
+		Close the network connection if there is one
+		in case the class is deleted.
+		"""
 		self.finish()
 
-	def closeConnection(self):
-		if self.sock != None:
-			self.sock.close()
-			self.sock = None
-
-	def setHost(self, host):
-		closeConnection()
-		self.host = host
-		
-	def setPort(self, port):
-		closeConnection()
-		self.port = port
-
-	def waitForData(self):
-		with self.cond:
-			if len(self.buffer) <= 0:
-				self.paused = True
-				self.cond.wait()
-				self.paused = False
-
 	def run(self):
-		self.active = True;
-		while self.active:
-			self.waitForData()
+		"""
+		The main network thread code. This runs, waiting for
+		commands to be added to the command buffer and sends
+		them as they're added.
+		The thread sleeps while there are no commands.
+		"""
+		self._active = True;
+		while self._active:
+			self._waitForData()
 
-			if self.sock == None:
+			if self._sock == None:
 				try:
-					self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-					self.sock.connect((self.host,self.port))
+					self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+					self._sock.connect((self.host,self.port))
 				except socket.error, (value, message):
-					if self.sock:
-						self.sock.close()
-						self.sock = None
+					if self._sock:
+						self._sock.close()
+						self._sock = None
 						print "Failed to connect: " + message
-						self.buffer = []
+						self._buffer = []
 
-			while len(self.buffer) > 0 and self.sock != None:
-				nextCommand = self.getNextCommand()
+			while len(self._buffer) > 0 and self._sock != None:
+				nextCommand = self._getNextCommand()
 				if nextCommand != "":
-					self.sock.send(nextCommand)
+					self._sock.send(nextCommand)
 					#print "Sending command: " + nextCommand
-					result = self.sock.recv(self.size)
+					result = self._sock.recv(self._size)
 					#print "Received: " + result
 					if result == "QUIT\n":
-						self.active = False
+						self._active = False
 					elif result != "OKAY\n":
 						print "Command failure: " + nextCommand
 		
-		self.closeConnection()
+		self._closeConnection()
 
-	def getNextCommand(self):
-		command = ""
-		if len(self.buffer) > 0:
-			command = self.buffer.pop(0)
-		return command
+	# Library public methods for use by other code
 
-	def prod(self):
-		if self.paused:
-			with self.cond:
-				self.cond.notify()
-
-	def sendCommand(self, command):
-		self.buffer.append(command)
-		self.prod()
+	def setHost(self, host):
+		"""
+		Set the hostname of the Dandelion server to connect to.
+		"""
+		self._closeConnection()
+		self.host = host
+		
+	def setPort(self, port):
+		"""
+		Set the port to connect to the Dandelion server on.
+		"""
+		self._closeConnection()
+		self.port = port
 
 	def addNode(self, node):
 		"""
@@ -96,7 +121,7 @@ class DlClient(threading.Thread):
 		node -- the name of the node to add
 		"""
 		command = "ADDNODE \"" + node + "\"\n";
-		self.sendCommand(command);
+		self._sendCommand(command);
 
 	def subNode(self, node):
 		"""
@@ -106,7 +131,7 @@ class DlClient(threading.Thread):
 		node -- the name of the node to remove
 		"""
 		command = "SUBNODE \"" + node + "\"\n";
-		self.sendCommand(command);
+		self._sendCommand(command);
 		
 	def moveNode(self, node, x, y, z):
 		"""
@@ -119,7 +144,7 @@ class DlClient(threading.Thread):
 		z -- the distance to move the node along the z-axis
 		"""
 		command = "MOVENODE \"" + node + "\" " + str(x) + " " + str(y) + " " + str(z) + '\n';
-		self.sendCommand(command);
+		self._sendCommand(command);
 		
 	def setNodeColour(self, node, red, green, blue):
 		"""
@@ -132,7 +157,7 @@ class DlClient(threading.Thread):
 		blue -- the blue colomponent of the colour to set
 		"""
 		command = "SETNODECOLOUR \"" + node + "\" " + str(red) + " " + str(green) + " " + str(blue) + '\n';
-		self.sendCommand(command);
+		self._sendCommand(command);
 
 	def addLink(self, nodeFrom, nodeTo):
 		"""
@@ -143,7 +168,7 @@ class DlClient(threading.Thread):
 		nodeTo -- the name of the node to link to
 		"""
 		command = "ADDLINK \"" + nodeFrom + "\" \"" + nodeTo + "\"\n";
-		self.sendCommand(command);
+		self._sendCommand(command);
 		
 	def subLink(self, nodeFrom, nodeTo):
 		"""
@@ -154,7 +179,7 @@ class DlClient(threading.Thread):
 		nodeTo -- the name of the node the link to be removed ends at
 		"""
 		command = "SUBLINK \"" + nodeFrom + "\" \"" + nodeTo + "\"\n";
-		self.sendCommand(command);
+		self._sendCommand(command);
 		
 	def addLinkBi(self, node1, node2):
 		"""
@@ -165,7 +190,7 @@ class DlClient(threading.Thread):
 		node2 -- a node to add the bidirectional link between
 		"""
 		command = "ADDLINKBI \"" + node1 + "\" \"" + node2 + "\"\n";
-		self.sendCommand(command);
+		self._sendCommand(command);
 		
 	def subLinkBi(self, node1, node2):
 		"""
@@ -176,7 +201,7 @@ class DlClient(threading.Thread):
 		node2 -- a node to remove the bidirectional link from
 		"""
 		command = "SUBLINKBI \"" + node1 + "\" \"" + node2 + "\"\n";
-		self.sendCommand(command);
+		self._sendCommand(command);
 
 	def addLinkNamed(self, name, nodeFrom, nodeTo):
 		"""
@@ -188,7 +213,7 @@ class DlClient(threading.Thread):
 		nodeTo -- the name of the node to link to
 		"""
 		command = "ADDLINK \"" + name + "\" \"" + nodeFrom + "\" \"" + nodeTo + "\"\n";
-		self.sendCommand(command);
+		self._sendCommand(command);
 
 	def subLinkNamed(self, name):
 		"""
@@ -198,7 +223,7 @@ class DlClient(threading.Thread):
 		name -- the link to remove
 		"""
 		command = "SUBLINK \"" + name + "\"\n";
-		self.sendCommand(command);
+		self._sendCommand(command);
 
 	def addLinkBiNamed(self, name, nodeFrom, nodeTo):
 		"""
@@ -210,7 +235,7 @@ class DlClient(threading.Thread):
 		nodeTo -- the name of the node to link to
 		"""
 		command = "ADDLINKBI \"" + name + "\" \"" + nodeFrom + "\" \"" + nodeTo + "\"\n";
-		self.sendCommand(command);
+		self._sendCommand(command);
 
 	def setLinkColour(self, link, red, green, blue):
 		"""
@@ -223,7 +248,7 @@ class DlClient(threading.Thread):
 		blue -- the blue colomponent of the colour to set
 		"""
 		command = "SETLINKCOLOUR \"" + link + "\" " + str(red) + " " + str(green) + " " + str(blue) + '\n';
-		self.sendCommand(command);
+		self._sendCommand(command);
 
 	def addNodePropInt(self, name, property, value):
 		"""
@@ -235,7 +260,7 @@ class DlClient(threading.Thread):
 		value -- integer value to add
 		"""
 		command = "ADDNODEPROP \"" + name + "\" \"" + property + "\" int \"" + str(value) + "\"\n";
-		self.sendCommand(command);
+		self._sendCommand(command);
 
 	def addNodePropFloat(self, name, property, value):
 		"""
@@ -247,7 +272,7 @@ class DlClient(threading.Thread):
 		value -- the float value to add
 		"""
 		command = "ADDNODEPROP \"" + name + "\" \"" + property + "\" float \"" + str(value) + "\"\n";
-		self.sendCommand(command);
+		self._sendCommand(command);
 
 	def addNodePropString(self, name, property, value):
 		"""
@@ -259,7 +284,7 @@ class DlClient(threading.Thread):
 		value -- the string value to add
 		"""
 		command = "ADDNODEPROP \"" + name + "\" \"" + property + "\" string \"" + value + "\"\n";
-		self.sendCommand(command);
+		self._sendCommand(command);
 
 	def subNodeProp(self, name, property):
 		"""
@@ -270,7 +295,7 @@ class DlClient(threading.Thread):
 		property -- the name of the property to remove
 		"""
 		command = "SUBNODEPROP \"" + name + "\" \"" + property + "\"\n";
-		self.sendCommand(command);
+		self._sendCommand(command);
 
 	def addLinkPropInt(self, name, property, value):
 		"""
@@ -282,7 +307,7 @@ class DlClient(threading.Thread):
 		value -- the integer value to add
 		"""
 		command = "ADDLINKPROP \"" + name + "\" \"" + property + "\" int \"" + str(value) + "\"\n";
-		self.sendCommand(command);
+		self._sendCommand(command);
 
 	def addLinkPropFloat(self, name, property, value):
 		"""
@@ -294,7 +319,7 @@ class DlClient(threading.Thread):
 		value -- the float value to add
 		"""
 		command = "ADDLINKPROP \"" + name + "\" \"" + property + "\" float \"" + str(value) + "\"\n";
-		self.sendCommand(command);
+		self._sendCommand(command);
 
 	def addLinkPropString(self, name, property, value):
 		"""
@@ -306,7 +331,7 @@ class DlClient(threading.Thread):
 		value -- the string value to add
 		"""
 		command = "ADDLINKPROP \"" + name + "\" \"" + property + "\" string \"" + value + "\"\n";
-		self.sendCommand(command);
+		self._sendCommand(command);
 
 	def subLinkProp(self, name, property):
 		"""
@@ -317,25 +342,81 @@ class DlClient(threading.Thread):
 		property -- the name of the property to remove
 		"""
 		command = "SUBLINKPROP \"" + name + "\" \"" + property + "\"\n";
-		self.sendCommand(command);
+		self._sendCommand(command);
 
 	def clear(self):
 		"""
 		Clear all nodes and links.
 		"""
 		command = "CLEAR\n";
-		self.sendCommand(command);
+		self._sendCommand(command);
 		
 	def quit(self):
 		"""
 		Finish off.
 		"""
 		command = "QUIT\n";
-		self.sendCommand(command);
+		self._sendCommand(command);
 		self.finish();
 
 	def finish(self):
-		self.active = False
-		self.prod()
+		"""
+		Close down the thread without sending the Quit command.
+		"""
+		self._active = False
+		self._prod()
+
+	# Internal private methods
+
+	def _closeConnection(self):
+		"""
+		Close the connection to the server if there is one.
+		For internal use. Use quit() to perform the same action cleanly.
+		"""
+		if self._sock != None:
+			self._sock.close()
+			self._sock = None
+
+	def _waitForData(self):
+		"""
+		Wait for some data to be added to the buffer and 
+		set the thread to sleep if there is none.
+		For internal use. Commands should be added to the buffer
+		using the many specific methods for this purpose.
+		"""
+		with self._cond:
+			if len(self._buffer) <= 0:
+				self._paused = True
+				self._cond.wait()
+				self._paused = False
+
+	def _getNextCommand(self):
+		"""
+		Extract the next command from the command buffer
+		so that it can be sent.
+		For internal use.
+		"""
+		command = ""
+		if len(self._buffer) > 0:
+			command = self._buffer.pop(0)
+		return command
+
+	def _prod(self):
+		"""
+		Prod the thread so that it wakes up.
+		For internal use.
+		"""
+		if self._paused:
+			with self._cond:
+				self._cond.notify()
+
+	def _sendCommand(self, command):
+		"""
+		Send a the given command string.
+		For internal use. To send commands the many specific
+		methods for this purpose should be used.
+		"""
+		self._buffer.append(command)
+		self._prod()
 
 
