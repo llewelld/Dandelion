@@ -88,7 +88,7 @@ NotesPersist * NewNotesPersist (TexPersist * psTexData) {
 	psNotesData->fExpulsion = 1.0f;
 	psNotesData->psSelectedNote = NULL;
 	psNotesData->boInverted = FALSE;
-	psNotesData->fFocusFar = 0.955;
+	psNotesData->fFocusFar = 0.95f;
 
   return psNotesData;
 }
@@ -513,7 +513,7 @@ void ApplyNoteExpulsion (FloatNote * psNote, NotesPersist * psNotesData) {
 
     if (psNoteCount != psNote) {
     	// Calculate fade
-		  fFade = (1.0f - ((psNoteCount->vsAnchor.fZ - 0.95) * 60.0f));
+		  fFade = (1.0f - ((psNoteCount->vsAnchor.fZ - psNotesData->fFocusFar) * 60.0f));
 
 			if ((psNoteCount->szText->len > 0) && (fFade > 0.0f) && (fFade < 50.0f))  {
 				// Calculate coverage
