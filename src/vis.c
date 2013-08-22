@@ -3010,6 +3010,12 @@ void SaveSettingsVis (SettingsPersist * psSettingsData, VisPersist * psVisData) 
   SettingsPrintFloat (psSettingsData, "ViewRadius", psVisData->fViewRadius);
   SettingsPrintFloat (psSettingsData, "Tethering", GetNoteTethering (psVisData->psNotesData));
 
+  SettingsPrintFloat (psSettingsData, "FocusNear", psVisData->fFocusNear);
+  SettingsPrintFloat (psSettingsData, "FocusFar", psVisData->fFocusFar);
+  SettingsPrintFloat (psSettingsData, "FocusScaleNear", psVisData->fFocusScaleNear);
+  SettingsPrintFloat (psSettingsData, "FocusScaleFar", psVisData->fFocusScaleFar);
+  SettingsPrintFloat (psSettingsData, "DarkenMax", psVisData->fDarkenMax);
+	
   // Save out the nodes
   g_slist_foreach (psVisData->psNodeList, SaveSettingsNode, psSettingsData);
 
@@ -3148,6 +3154,21 @@ void VisLoadProperty (SETTINGTYPE const eType, char const * szName, void const *
     }
     else if (stricmp (szName, "Tethering") == 0) {
     	SetNoteTethering (*((float*)(psValue)), psVisData->psNotesData);
+    }
+    else if (stricmp (szName, "FocusNear") == 0) {
+      psVisData->fFocusNear = *((float*)(psValue));
+    }
+    else if (stricmp (szName, "FocusFar") == 0) {
+      psVisData->fFocusFar = *((float*)(psValue));
+    }
+    else if (stricmp (szName, "FocusScaleNear") == 0) {
+      psVisData->fFocusScaleNear = *((float*)(psValue));
+    }
+    else if (stricmp (szName, "FocusScaleFar") == 0) {
+      psVisData->fFocusScaleFar = *((float*)(psValue));
+    }
+    else if (stricmp (szName, "DarkenMax") == 0) {
+      psVisData->fDarkenMax = *((float*)(psValue));
     }
     break;
   default:

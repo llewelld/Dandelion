@@ -1,5 +1,7 @@
 # Object files
 *.o
+*.def
+*.exp
 
 # Libraries
 *.lib
@@ -15,3 +17,7 @@
 *.exe
 *.out
 *.app
+*.pyc
+
+# Specific files
+.dandelion.xml

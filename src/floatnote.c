@@ -35,11 +35,13 @@
 #define NOTE_BORDEREXT (10.0f)
 #define NOTE_PICSIZE (24.0f/32.0f)
 #define NOTE_BORDERWIDTH (8.0f)
-#define NOTE_BACKFADEMAX (0.5f)
+#define NOTE_BACKFADEMAX (0.65f)
 #define NOTE_TEXTFADEMAX (0.7f)
 #define NOTE_XSHIFT (16.0f)
 #define NOTE_YSHIFT (16.0f)
 #define NOTE_LAYER_ZPOS	(0.0f)
+#define NOTE_FOCUSFADE (85.0f)
+#define NOTE_FOCUSSHIFT (-0.01f)
 
 
 ///////////////////////////////////////////////////////////////////
@@ -131,7 +133,7 @@ void RenderNote (FloatNote * psNote, NotesPersist * psNotesData) {
 			+ ((psNote->vsPos.fY + psNote->fMarginExternal + NOTE_YSHIFT - psNote->vsAnchor.fY)
 			* (psNote->vsPos.fY + psNote->fMarginExternal + NOTE_YSHIFT - psNote->vsAnchor.fY));
 		if (fLength < (200.0f * 200.0f)) {
-			fFade = (1.0f - ((psNote->vsAnchor.fZ - psNotesData->fFocusFar) * 60.0f));
+			fFade = (1.0f - ((psNote->vsAnchor.fZ - psNotesData->fFocusFar + NOTE_FOCUSSHIFT) * NOTE_FOCUSFADE));
 			if (psNote == psNotesData->psSelectedNote) {
 				fFade = (1.0f / NOTE_BACKFADEMAX);
 			}
@@ -195,7 +197,7 @@ void RenderNoteAnchor (FloatNote * psNote, NotesPersist * psNotesData) {
 
 	if (psNote->szText->len > 0) {
 		// Draw a transparent rectangle on the screen
-		fFade = (1.0f - ((psNote->vsAnchor.fZ - psNotesData->fFocusFar) * 60.0f));
+		fFade = (1.0f - ((psNote->vsAnchor.fZ - psNotesData->fFocusFar + NOTE_FOCUSSHIFT) * NOTE_FOCUSFADE));
 		if (psNote == psNotesData->psSelectedNote) {
 			fFade = (1.0f / NOTE_BACKFADEMAX);
 		}
@@ -513,7 +515,7 @@ void ApplyNoteExpulsion (FloatNote * psNote, NotesPersist * psNotesData) {
 
     if (psNoteCount != psNote) {
     	// Calculate fade
-		  fFade = (1.0f - ((psNoteCount->vsAnchor.fZ - psNotesData->fFocusFar) * 60.0f));
+		  fFade = (1.0f - ((psNoteCount->vsAnchor.fZ - psNotesData->fFocusFar + NOTE_FOCUSSHIFT) * NOTE_FOCUSFADE));
 
 			if ((psNoteCount->szText->len > 0) && (fFade > 0.0f) && (fFade < 50.0f))  {
 				// Calculate coverage
