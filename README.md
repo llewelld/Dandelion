@@ -7,6 +7,10 @@ For more information about the application, please visit one of the following si
 * Dandelion website: http://www.flypig.co.uk/?to=dandelion
 * GitHub wiki: https://github.com/llewelld/Dandelion/wiki
 
+
+[![Build Status](https://drone.io/github.com/llewelld/Dandelion/status.png)](https://drone.io/github.com/llewelld/Dandelion/latest)
+
+
 Credits
 -------
 
