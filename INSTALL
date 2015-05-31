@@ -38,7 +38,7 @@ or
 
 7. To create the debian package:
 
-debuild -b
+debuild -b --lintian-opts -X changes-file
 
 8. To create the source archive:
 

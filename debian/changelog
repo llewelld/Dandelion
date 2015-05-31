@@ -1,5 +1,9 @@
-dandelion (1.0.0-1) unstable; urgency=low
+dandelion (1.0.1-1) unstable; urgency=low
+  * Improved view with inverted background.
 
-  * Initial release
+ -- David Llewellyn-Jones <david@flypig.co.uk>  Sun, 31 May 2015 11:41:30 +0100
+
+dandelion (1.0.0-1) unstable; urgency=low
+  * Initial release.
 
  -- David Llewellyn-Jones <david@flypig.co.uk>  Thu, 08 Aug 2013 14:46:18 +0100

@@ -1,5 +1,5 @@
 Source: dandelion
-Section: unknown
+Section: science
 Priority: extra
 Maintainer: David Llewellyn-Jones <david@flypig.co.uk>
 Build-Depends: debhelper (>= 8.0.0), autotools-dev
