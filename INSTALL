@@ -3,23 +3,32 @@ Quick instructions
 
 Under Linux
 
-1. Generate configure scripts:
+1. Install dependencies. This'll depend on your system, but for me on Ubuntu it requires the following:
+
+sudo apt-get install autoconf
+sudo apt-get install libgtkglext1-dev
+sudo apt-get install glee-dev
+sudo apt-get install freeglut3-dev
+sudo apt-get install libgnet-dev
+sudo apt-get install libglu1-mesa-dev
+
+2. Generate configure scripts:
 
 autoreconf --install
 
-2. Generate makefiles:
+3. Generate makefiles:
 
 ./configure
 
-3. Build application:
+4. Build application:
 
 make
 
-4. Install application (usually has to be done as root):
+5. Install application (usually has to be done as root):
 
 sudo make install
 
-5. Run the Dandelion or client application:
+6. Run the Dandelion or client application:
 
 ./dandelion
 
@@ -27,11 +36,11 @@ or
 
 ./dandeclient
 
-6. To create the debian package:
+7. To create the debian package:
 
 debuild -b
 
-7. To create the source archive:
+8. To create the source archive:
 
 make dist-zip
 

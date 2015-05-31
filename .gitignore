@@ -19,5 +19,40 @@
 *.app
 *.pyc
 
+# autoconf
+
+/autom4te.cache/
+/.dirstamp
+/ChangeLog
+/Makefile
+/assets/Makefile
+/config.h
+/config.log
+/config.status
+/dandeclient
+/dandeclientsrc/Makefile
+/dandelion
+/debian/dandelion.debhelper.log
+/debian/dandelion/
+/src/Makefile
+/stamp-h1
+.deps/
+
 # Specific files
 .dandelion.xml
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
