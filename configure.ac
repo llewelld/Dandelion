@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([Dandelion], [1.00], [david@flypig.co.uk])
+AC_INIT([Dandelion], [1.01], [david@flypig.co.uk])
 AC_CONFIG_AUX_DIR([config])
 AM_INIT_AUTOMAKE([-Wall -Werror])
 AC_CONFIG_SRCDIR([src/dandelion.c])
