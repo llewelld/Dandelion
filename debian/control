@@ -3,7 +3,6 @@ Section: science
 Priority: extra
 Maintainer: David Llewellyn-Jones <david@flypig.co.uk>
 Build-Depends: debhelper (>= 8.0.0), autotools-dev, libgtkglext1-dev, freeglut3-dev, libgtk2.0-dev, libpango1.0-dev, libglib2.0-dev, libcairo2-dev, libpng12-dev, glee-dev
-
 Standards-Version: 3.9.4
 Homepage: http://www.flypig.co.uk/?to=dandelion
 Vcs-Git: https://github.com/llewelld/Dandelion.git
