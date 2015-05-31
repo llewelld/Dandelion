@@ -55,11 +55,11 @@ void main () {
 			vBlur += texture2D (framebufferTexture, vTexPos) / 49.0;
 		}
 	}
-   
-	vBlur.x *= fDarken;
-	vBlur.y *= fDarken;
-	vBlur.z *= fDarken;
-   
+  
+  //vBlur *= fDarken;
+  vBlur = vec4(1.0, 1.0, 1.0, 1.0) - ((vec4(1.0, 1.0, 1.0, 1.0) - vBlur) * fDarken);
+  
+  
 	gl_FragColor = vBlur;
 }
 
