@@ -115,7 +115,7 @@
 // The smaller the value the greater the blur
 #define BLUR_FOCUS_SCALENEAR (70.0f)
 #define BLUR_FOCUS_SCALEFAR (640.0f)
-#define BLUR_DARKENMAX (0.5f)
+#define BLUR_DARKENMAX (1.0f)
 
 ///////////////////////////////////////////////////////////////////
 // Structures and enumerations
