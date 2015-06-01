@@ -37,5 +37,6 @@ AC_CHECK_FUNCS([floor ftime pow sqrt])
 AC_CONFIG_FILES([Makefile
                  src/Makefile
                  assets/Makefile
+                 assets/icons/Makefile
                  dandeclientsrc/Makefile])
 AC_OUTPUT

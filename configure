@@ -5326,7 +5326,7 @@ fi
 done
 
 
-ac_config_files="$ac_config_files Makefile src/Makefile assets/Makefile dandeclientsrc/Makefile"
+ac_config_files="$ac_config_files Makefile src/Makefile assets/Makefile assets/icons/Makefile dandeclientsrc/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -6059,6 +6059,7 @@ do
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
     "assets/Makefile") CONFIG_FILES="$CONFIG_FILES assets/Makefile" ;;
+    "assets/icons/Makefile") CONFIG_FILES="$CONFIG_FILES assets/icons/Makefile" ;;
     "dandeclientsrc/Makefile") CONFIG_FILES="$CONFIG_FILES dandeclientsrc/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;

@@ -26,6 +26,7 @@
 /ChangeLog
 /Makefile
 /assets/Makefile
+/assets/icons/Makefile
 /config.h
 /config.log
 /config.status
